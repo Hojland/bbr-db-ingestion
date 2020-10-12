@@ -27,7 +27,7 @@ def gen_postgre_query(JSON_SCHEMA, DB_SCHEMA, DB_TABLE_NAME):
     data = ijson.parse(open(JSON_SCHEMA, 'r'))
     schema = {}
     # Identify all variables and their types and format. 
-    for prefix, event, value in data:
+    for prefix, _, value in data:
         if ".type.item" in prefix or ".format" in prefix:
             key = gen_key_name(prefix)
             schema.setdefault(key, []).append(value)
@@ -64,6 +64,16 @@ def gen_key_name(s: str):
     if s_l[last_prop-1] != "items":
         key_name = s_l[last_prop-1] + "_" + key_name
 
+    return key_name
+
+
+def gen_key_name_request(s: str):
+    """Given a json path with seperator=. generate a key name for datafordeler api requests """
+    s_l = s.split(".")
+    pos = [i for i, x in enumerate(s_l) if x == "item"]
+    last_item = max(pos)
+    key_name = s_l[last_item+1:]
+    key_name = "_".join(key_name).lower()
     return key_name
 
 

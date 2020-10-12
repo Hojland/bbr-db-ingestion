@@ -1,0 +1,29 @@
+pipeline {
+    agent {label 'docker-slave-r5.xlarge'} /* Vælger agent. */
+    stages {
+        stage('Build image') {
+            steps {
+                script {
+                    image = docker.build("${JOB_NAME}:${BUILD_ID}", "-f docker/prod.Dockerfile .")
+                }
+            }
+        }
+        stage('Score data') {
+            steps {
+                script {
+                    withCredentials([
+                        usernamePassword(credentialsId: 'nuuday-ai-prod-mysql', usernameVariable: 'DB_USER', passwordVariable: 'DB_PW'),
+                        usernamePassword(credentialsId: 'azure-blob-storage', usernameVariable: 'AZURE_BLOB_USR', passwordVariable: 'AZURE_BLOB_KEY')
+                    ]) {
+                        sh "docker run -t --rm -e 'DB_USER=${DB_USER}' -e 'DB_PW=${DB_PW}' -e 'AZURE_BLOB_USR=${AZURE_BLOB_USR}' -e 'AZURE_BLOB_KEY=${AZURE_BLOB_KEY}' -e PYTHONPATH=/app/src/utils ${JOB_NAME}:${BUILD_ID} bash -c 'python -u /app/src/scoring.py'"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
