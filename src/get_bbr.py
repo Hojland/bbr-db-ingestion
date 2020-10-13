@@ -4,18 +4,20 @@ import pandas as pd
 import math
 import ijson
 import os
+import time
 import json
 from configparser import ConfigParser
+from datetime import datetime
 # Use sqlalchemy instead
-from src.utils import create_sql_table, gen_mysql_query, sql_table_col_names, gen_key_name_request, create_mysql_engine, dict_flattener, write_json
+from src.utils import create_sql_table, gen_mysql_query, sql_table_col_names, gen_key_name_request, create_mysql_engine, dict_flattener, write_json, read_json
 
+start_time = time.time()
 # Load in source meta data
 path_to_src_metadata = 'src/metadata/bbr_enhed.json'
-with open(path_to_src_metadata) as json_file: 
-    metadata = json.load(json_file) 
+metadata = read_json(path_to_src_metadata)
 
 
-# Config
+# Get config file
 config_object = ConfigParser()
 config_object.read("config.ini")
 serverconfig = config_object["SQLSERVERCONFIG"]
@@ -29,6 +31,7 @@ db_input_config = {
 "pwd": os.getenv("MARIADB_PW")
 }
 
+# Create database engine
 input_engine = create_mysql_engine(**db_input_config)
 
 path_to_json = metadata["schema_path"]
@@ -39,6 +42,27 @@ create_table_query, columns, datetime_columns = gen_mysql_query(path_to_json, db
 metadata["columns"] = columns
 metadata["datetime_columns"] = datetime_columns 
 write_json(metadata, path_to_src_metadata)
+
+# Get data from source API
+rest_url = metadata["endpoint_all"]
+pars = {'username': 'XBNOBAOZNU', 
+'password': 'HejHej-1234', "page": 2, "pagesize": 1000}
+# Request data
+output = requests.get(rest_url, params=pars).text
+# Flatten dict
+output = dict_flattener(output)
+# dataframe it
+df = pd.DataFrame(output, columns = columns)
+# Convert datecolumns to python datetimes
+for datecol in datetime_columns:
+    df.loc[:, datecol] = df.loc[:, datecol].apply(lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z") if pd.notnull(x) else x)
+
+
+df.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
+
+print("--- %s seconds ---" % (time.time() - start_time))
+
+
 
 # Extracting data from data fordeler. 
 # Dokumentation for BBR 

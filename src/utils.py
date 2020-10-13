@@ -127,6 +127,13 @@ def dict_flattener(d: dict):
     return cleaned_dicts
 
 
-def write_json(data, filename='data.json'): 
-    with open(filename,'w') as f: 
+def write_json(data, full_path_filename): 
+    with open(full_path_filename,'w') as f: 
         json.dump(data, f, indent=4) 
+
+
+def read_json(full_path_filename):
+    with open(full_path_filename) as json_file: 
+        data = json.load(json_file) 
+
+    return data
