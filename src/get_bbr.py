@@ -9,9 +9,10 @@ import json
 from configparser import ConfigParser
 from datetime import datetime
 # Use sqlalchemy instead
-from src.utils import create_sql_table, gen_mysql_query, sql_table_col_names, gen_key_name_request, create_mysql_engine, dict_flattener, write_json, read_json
+from src.utils import create_sql_table, gen_mysql_query, sql_table_col_names, gen_key_name_request, create_mysql_engine, dict_flattener, write_json, read_json, check_table_existance
 
 start_time = time.time()
+
 # Load in source meta data
 path_to_src_metadata = 'src/metadata/bbr_enhed.json'
 metadata = read_json(path_to_src_metadata)
@@ -34,36 +35,108 @@ db_input_config = {
 # Create database engine
 input_engine = create_mysql_engine(**db_input_config)
 
-path_to_json = metadata["schema_path"]
-# Create postgre query
-create_table_query, columns, datetime_columns = gen_mysql_query(path_to_json, db_input_config["db"], metadata["name"])
-# create_sql_table(create_table_query, input_engine)
-# Create pd dataframe consistent with sql table
-metadata["columns"] = columns
-metadata["datetime_columns"] = datetime_columns 
-write_json(metadata, path_to_src_metadata)
+# Check table existance
+if check_table_existance(metadata["name"], db_input_config["db"], input_engine):
+    print("hej")
+else:
+    # Initialize the beast!
+    path_to_json = metadata["schema_path"]
+    # Create postgre query
+    create_table_query, columns, datetime_columns = gen_mysql_query(path_to_json, db_input_config["db"], metadata["name"])
+    create_sql_table(create_table_query, input_engine)
 
-# Get data from source API
+    # Create pd dataframe consistent with sql table
+    metadata["columns"] = columns
+    metadata["datetime_columns"] = datetime_columns 
+    write_json(metadata, path_to_src_metadata)
+    
+    # Get data from source API
+    rest_url = metadata["endpoint_all"]
+    pars = {'username': 'XBNOBAOZNU', 
+    'password': 'HejHej-1234', "page": 1, "pagesize": 1000}
+    # Request data
+    output = requests.get(rest_url, params=pars).text
+    # Flatten dict
+    output = dict_flattener(output)
+    # dataframe it
+    df = pd.DataFrame(output, columns = columns)
+    # Convert datecolumns to python datetimes
+    for datecol in datetime_columns:
+        df.loc[:, datecol] = df.loc[:, datecol].apply(lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%d %H:%M:%S.%f") if pd.notnull(x) else x)
+    
+    df.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
+
+
+import requests #to make TMDB API calls
+
+
+output = requests.get(rest_url, params=pars).json()
+output_2 = dict_flattener(output.json())
+
+
+
+if output.json():
+    print("hej")
+
+output = True
+
+requests.get(rest_url, params={"count":True, 'username': 'XBNOBAOZNU', 
+'password': 'HejHej-1234'}).text
+
+4171641 / 1000
+
 rest_url = metadata["endpoint_all"]
 pars = {'username': 'XBNOBAOZNU', 
-'password': 'HejHej-1234', "page": 2, "pagesize": 1000}
-# Request data
-output = requests.get(rest_url, params=pars).text
-# Flatten dict
-output = dict_flattener(output)
-# dataframe it
-df = pd.DataFrame(output, columns = columns)
-# Convert datecolumns to python datetimes
-for datecol in datetime_columns:
-    df.loc[:, datecol] = df.loc[:, datecol].apply(lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z") if pd.notnull(x) else x)
+'password': 'HejHej-1234', "page": 1, "pagesize": 1000}
+
+t = time.time()
+output = True
+a = []
+while output:
+    print(str(time.time() - t) + " now page: " + str(pars["page"]))
+    output = requests.get(rest_url, params=pars).json()
+    output = dict_flattener(output)
+    pars["page"] += 1
+    print(str(time.time() - t) + " next page: " + str(pars["page"]))
+    time.sleep(2)
 
 
-df.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
+
+
+
+
+427 * 4175 / 60 / 60 / 
+
+
+339.6647219657898 - 427.5229036808014
+
+( 90 * 4175 ) / 60 / 60 / 24
+
+output
+
+a = pd.DataFrame(output, columns=metadata["columns"])
+
+a.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
+
+    # 
+    output = requests.get(rest_url, params=pars).json
+    # Flatten dict
+    output = dict_flattener(output)
+    # dataframe it
+    df = pd.DataFrame(output, columns = columns)
+    # Convert datecolumns to python datetimes
+    for datecol in datetime_columns:
+        df.loc[:, datecol] = df.loc[:, datecol].apply(lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%d %H:%M:%S.%f") if pd.notnull(x) else x)
+    
+    df.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
+    pars["page"] += 1
+
+
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
 
-
+output.json()
 # Extracting data from data fordeler. 
 # Dokumentation for BBR 
 # https://confluence.datafordeler.dk/pages/viewpage.action?pageId=16056582
@@ -91,6 +164,7 @@ bbr_enhed = pd.DataFrame(output, columns = column_names)
 # Push to DB
 bbr_enhed.to_sql(name="bbr_enhed", con=input_engine, index=False, schema='input', if_exists='append', method="multi")
 
+
 # Pull hændelser BBR
 "https://services.datafordeler.dk/system/EventMessages/1.0.0/custom?datefrom=2020-01-01&dateto=2020-02-01&username=<some_username>&password=<some_password>&format=Json&page=1&pagesize=1000"
 
@@ -106,9 +180,6 @@ s[0:10]
 
 
 d.strftime("%Y-%m-%dT%H:%M:%S")
-
-
-
 
 
 

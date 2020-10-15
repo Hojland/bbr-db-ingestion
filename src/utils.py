@@ -9,6 +9,19 @@ def create_sql_table(STATEMENT, ENGINE):
         con.execute(STATEMENT)
 
 
+def check_table_existance(TABLE_NAME: str, TABLE_SCHEMA: str, ENGINE):
+    """Checks whether a SQL table already exists"""
+    with ENGINE.connect() as con:
+        result = con.execute(f"""SELECT COUNT(*)
+        FROM information_schema.tables
+        WHERE table_name = '{TABLE_NAME}' and TABLE_SCHEMA='{TABLE_SCHEMA}'""")
+        result = [r[0] for r in result][0]
+        if result == 1:
+            return True
+        
+    return False
+
+
 def gen_mysql_query(JSON_SCHEMA, DB_SCHEMA, DB_TABLE_NAME):
     """ from schema generate postgreSQL create table query"""
     data = ijson.parse(open(JSON_SCHEMA, 'r'))
@@ -23,14 +36,14 @@ def gen_mysql_query(JSON_SCHEMA, DB_SCHEMA, DB_TABLE_NAME):
     for k, v in schema.items():
         col_type = k
         if "date-time" in v:
-            col_type += " TIMESTAMP"
+            col_type += " DATETIME"
         else:
             if "string" in v:
                 col_type += " TEXT"
             elif "integer" in v:
                 col_type += " INT"
         
-        if "null" not in v:
+        if "null" not in v and "_" not in k:
             col_type += " NOT NULL"
         
         columns.append(col_type)
@@ -102,11 +115,11 @@ def create_mysql_engine(host, port, db, user, pwd):
     return engine
 
 
-def dict_flattener(d: dict):
+def dict_flattener(d: str):
     """Function that flattens a dict with nested dicts using ijson.
         Each nested dict variable will be prefixed with <itemname>_"""
-    
-    bytestring = str.encode(d)
+
+    bytestring = str.encode(json.dumps(d))
     # convert dict to ijson format
     parse_events = ijson.parse(io.BytesIO(bytestring))
     cleaned_dicts = []
