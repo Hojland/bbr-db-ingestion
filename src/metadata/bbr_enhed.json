@@ -1,6 +1,6 @@
 {
     "name": "bbr_enhed",
-    "schema_path": "src/schemas/BBR_2.4.4_Enhed.schema.json",
+    "schema_name": "BBR_2.4.4_Enhed.schema.json",
     "endpoint_all": "https://services.datafordeler.dk//BBR/BBRPublic/1/REST/enhed?",
     "columns": [
         "datafordeleropdateringstid",

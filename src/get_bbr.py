@@ -1,3 +1,5 @@
+%load_ext autoreload
+%autoreload 2
 import requests
 import ast
 import pandas as pd
@@ -6,49 +8,87 @@ import ijson
 import os
 import time
 import json
-from configparser import ConfigParser
 from datetime import datetime
-# Use sqlalchemy instead
-from src.utils import create_sql_table, gen_mysql_query, sql_table_col_names, gen_key_name_request, create_mysql_engine, dict_flattener, write_json, read_json, check_table_existance
+import glob
+from pathlib import Path
 
-start_time = time.time()
+from utils import utils, sql_utils
+from utils import sql, datafordeler_utils
+import settings
 
-# Load in source meta data
-path_to_src_metadata = 'src/metadata/bbr_enhed.json'
-metadata = read_json(path_to_src_metadata)
+start_time = utils.time_now()
+
+def datafordeler_initial_parser(metadata: dict, metadata_file: str):
+    schema_path = settings.SCHEMA_PATH.absolute().as_posix() + '/' + metadata["schema_name"]
+    
+    schema = datafordeler_utils.parse_datafordeler_schema(schema_path)
+    mysql_engine = sql_utils.create_engine(settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'], db_type='mysql')
+    metadata["columns"] = list(schema.keys())
+    metadata["datetime_columns"] = [k for k,v in schema.items() if "date-time" in v]
+    utils.write_json(metadata, metadata_file)
+
+    base_url = metadata['endpoint_all']
+    params = {
+        'username': settings.DATAFORDLER_API_USR,
+        'password': settings.DATAFORDLER_API_PSW,
+        'page': 1,
+        'pagesize': 1000,
+    }
+    res = output = requests.get(base_url, params=params).json()
+    res = datafordeler_utils.dict_flattener(res)
+    df = pd.DataFrame(res, columns=metadata["columns"])
+
+    df[metadata["datetime_columns"]] = df[metadata["datetime_columns"]].apply(lambda x: pd.to_datetime(x, format="%Y-%m-%dT%H:%M:%S.%f%z", errors='coerce', utc=True), axis=0)
+    return df
+
+def datafordeler_new_events(metadata: dict, metadata_file: str):
+
+def main():
+    # Load in source meta data
+    metadata_filelst = glob.glob(settings.METADATA_PATH.absolute().as_posix() + '/*.json')
+    mysql_engine = sql_utils.create_engine(settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'], db_type='mysql')
+    
+    for metadata_file in metadata_filelst:
+        metadata = utils.read_json(metadata_file)
+        if not sql_utils.table_exists(mysql_engine, settings.MARIADB_CONFIG['db'], metadata["name"]):
+            """Ingest a brand new table into database"""
+            df = datafordeler_initial_parser(metadata_file, metadata)
+            df.to_sql(name=metadata["name"], con=mysql_engine, index=False, schema=settings.MARIADB_CONFIG['db'], if_exists='append', method="multi")
+        else:
+            """Ingest new events into database"""
+            df = datafordeler_new_events(etadata_file, metadata)
 
 
-# Get config file
-config_object = ConfigParser()
-config_object.read("config.ini")
-serverconfig = config_object["SQLSERVERCONFIG"]
+if __name__ == '__main__':
+    main()
 
-# Database configurations
-db_input_config = {
-"host": serverconfig["host"],
-"port": serverconfig["port"],
-"db": serverconfig["db"],
-"user": os.getenv("MARIADB_USER"),
-"pwd": os.getenv("MARIADB_PW")
-}
+#TODO:
+# Change schemas to a settings var instead of DB from settings
+
 
 # Create database engine
-input_engine = create_mysql_engine(**db_input_config)
+input_engine = utils.create_mysql_engine(**db_input_config)
 
 # Check table existance
-if check_table_existance(metadata["name"], db_input_config["db"], input_engine):
-    print("hej")
+if utils.check_table_existence(metadata["name"], db_input_config["db"], input_engine):
+    #update table with events
 else:
     # Initialize the beast!
-    path_to_json = metadata["schema_path"]
-    # Create postgre query
-    create_table_query, columns, datetime_columns = gen_mysql_query(path_to_json, db_input_config["db"], metadata["name"])
-    create_sql_table(create_table_query, input_engine)
+    schema_path = metadata["schema_path"]
+    db_schema = utils.parse_datafordeler_schema(schema_path)
+
+    # List of column names
+    columns = list(schema.keys())
+    # List of all date-time variables
+    datetime_columns = [k for k,v in schema.items() if "date-time" in v]
+
+    create_table_query, columns, datetime_columns = utils.gen_mysql_query(path_to_json, db_input_config["db"], metadata["name"])
+    utils.create_sql_table(create_table_query, input_engine)
 
     # Create pd dataframe consistent with sql table
     metadata["columns"] = columns
     metadata["datetime_columns"] = datetime_columns 
-    write_json(metadata, path_to_src_metadata)
+    utils.write_json(metadata, path_to_src_metadata)
     
     # Get data from source API
     rest_url = metadata["endpoint_all"]
@@ -57,10 +97,11 @@ else:
     # Request data
     output = requests.get(rest_url, params=pars).text
     # Flatten dict
-    output = dict_flattener(output)
+    output = utils.dict_flattener(output)
     # dataframe it
     df = pd.DataFrame(output, columns = columns)
     # Convert datecolumns to python datetimes
+    
     for datecol in datetime_columns:
         df.loc[:, datecol] = df.loc[:, datecol].apply(lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%d %H:%M:%S.%f") if pd.notnull(x) else x)
     
@@ -71,7 +112,7 @@ import requests #to make TMDB API calls
 
 
 output = requests.get(rest_url, params=pars).json()
-output_2 = dict_flattener(output.json())
+output_2 = utils.dict_flattener(output.json())
 
 
 
@@ -85,6 +126,12 @@ requests.get(rest_url, params={"count":True, 'username': 'XBNOBAOZNU',
 
 4171641 / 1000
 
+
+
+
+
+
+
 rest_url = metadata["endpoint_all"]
 pars = {'username': 'XBNOBAOZNU', 
 'password': 'HejHej-1234', "page": 1, "pagesize": 1000}
@@ -95,7 +142,13 @@ a = []
 while output:
     print(str(time.time() - t) + " now page: " + str(pars["page"]))
     output = requests.get(rest_url, params=pars).json()
-    output = dict_flattener(output)
+    output = utils.dict_flattener(output)
+    df = pd.DataFrame(output, columns = columns)
+    # Convert datecolumns to python datetimes
+    for datecol in datetime_columns:
+        df.loc[:, datecol] = df.loc[:, datecol].apply(lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%d %H:%M:%S.%f") if pd.notnull(x) else x)
+    
+    df.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
     pars["page"] += 1
     print(str(time.time() - t) + " next page: " + str(pars["page"]))
     time.sleep(2)
@@ -121,7 +174,7 @@ a.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_c
     # 
     output = requests.get(rest_url, params=pars).json
     # Flatten dict
-    output = dict_flattener(output)
+    output = utils.dict_flattener(output)
     # dataframe it
     df = pd.DataFrame(output, columns = columns)
     # Convert datecolumns to python datetimes
@@ -155,7 +208,7 @@ pars = {'username': 'XBNOBAOZNU',
 # Request data
 output = requests.get(bbr_enhed_url, params=pars).text
 # Flatten dict
-output = dict_flattener(output)
+output = utils.dict_flattener(output)
 # Lowercase all keys to be consistent with postgresql.
 
 # Create dataframe that's consistent with db table structure. 
