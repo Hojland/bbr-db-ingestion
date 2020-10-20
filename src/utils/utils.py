@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import logging
 import time
 import sys
+import re
 
 
 def write_json(data, full_path_filename): 
@@ -77,3 +78,10 @@ def timeit(method):
 def time_now(local_tz: pytz.timezone=pytz.timezone("Europe/Copenhagen")):
     now = datetime.today().replace(tzinfo=pytz.utc).astimezone(tz=local_tz)
     return now
+
+def multiple_replace(replace_dct: dict, text: str, **kwargs):
+  # Create a regular expression  from the dictionary keys
+  regex = re.compile("(%s)" % "|".join(map(re.escape, replace_dct.keys())), **kwargs)
+
+  # For each match, look-up corresponding value in dictionary
+  return regex.sub(lambda mo: replace_dct[mo.string[mo.start():mo.end()]], text)

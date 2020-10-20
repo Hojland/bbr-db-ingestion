@@ -53,7 +53,5 @@ def dict_flattener(d: str):
             del d
         else:
             pass
-    # Lower case keys
-    cleaned_dicts = [dict((k.lower(), v) for k, v in d.items()) for d in cleaned_dicts]
 
     return cleaned_dicts

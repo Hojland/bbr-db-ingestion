@@ -4,3 +4,4 @@ mysqlclient>=1.4.6
 ijson
 requests
 tqdm
+jmespath

@@ -1,7 +1,7 @@
 {
     "name": "bbr_enhed",
     "schema_name": "BBR_2.4.4_Enhed.schema.json",
-    "endpoint_all": "https://services.datafordeler.dk//BBR/BBRPublic/1/REST/enhed?",
+    "objekttype": "Enhed",
     "columns": [
         "datafordeleropdateringstid",
         "adresseidentificerer",

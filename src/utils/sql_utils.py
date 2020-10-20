@@ -75,6 +75,12 @@ def table_exists(db_engine: sqlalchemy.engine, schema_name: str, table_name: str
         exists = True
     return exists
 
+def update_table(db_engine: sqlalchemy.engine, table_name: str, update_dct: dict, index_dct: dict):
+    update_string = ', '.join(f"{key}='{value}'" for key, value in update_dct.items())
+    index_string = ' AND '.join(f"{key}='{value}'" for key, value in index_dct.items())
+    sql_query = f'UPDATE {table_name} SET {update_string} WHERE {index_string}'
+    db_engine.execute(sql_query)
+
 def view_exists(db_engine: sqlalchemy.engine, schema: str, view: str, sql_lang: str='mysql'):
     base_sql_query = f'''EXISTS (SELECT * 
                          FROM INFORMATION_SCHEMA.VIEWS

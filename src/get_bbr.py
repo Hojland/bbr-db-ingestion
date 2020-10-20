@@ -10,13 +10,16 @@ import time
 import json
 from datetime import datetime
 import glob
+import logging
+import re
 from pathlib import Path
+import functools
+import logging
+import jmespath
 
 from utils import utils, sql_utils
 from utils import sql, datafordeler_utils
 import settings
-
-start_time = utils.time_now()
 
 def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     schema_path = settings.SCHEMA_PATH.absolute().as_posix() + '/' + metadata["schema_name"]
@@ -27,232 +30,142 @@ def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     metadata["datetime_columns"] = [k for k,v in schema.items() if "date-time" in v]
     utils.write_json(metadata, metadata_file)
 
-    base_url = metadata['endpoint_all']
+    base_url = settings.DATAFORDELER_BASE_URL
+    url = base_url + metadata['objekttype'].lower()
     params = {
         'username': settings.DATAFORDLER_API_USR,
         'password': settings.DATAFORDLER_API_PSW,
         'page': 1,
         'pagesize': 1000,
     }
-    res = output = requests.get(base_url, params=params).json()
-    res = datafordeler_utils.dict_flattener(res)
-    df = pd.DataFrame(res, columns=metadata["columns"])
+    scroll = True
+    start_time = utils.time_now()
+    while scroll:
+        logging.info(str(utils.time_now() - start_time) + " now page: " + str(params["page"]))
+        res = requests.get(url, params=params).json()
+        res = datafordeler_utils.dict_flattener(res)
+        # Lower case keys
+        res = [dict((k.lower(), v) for k, v in d.items()) for d in res]
+        df = pd.DataFrame(res, columns=metadata["columns"])
+        df[metadata["datetime_columns"]] = \
+            df[metadata["datetime_columns"]].apply(
+            lambda x: pd.to_datetime(x, format=metadata['datetime_format'],
+            errors='coerce', utc=True), axis=0)
+        df.to_sql(
+            name=metadata["name"], con=mysql_engine,
+            index=False, schema=settings.DB_SCHEMA,
+            if_exists='append', method="multi")
+        scroll = True if res else False
+        params["page"] += 1
+        time.sleep(settings.DATAFORDELER_API_SLEEP_TIME)
+        if params["page"] > 5:
+            break
 
-    df[metadata["datetime_columns"]] = df[metadata["datetime_columns"]].apply(lambda x: pd.to_datetime(x, format="%Y-%m-%dT%H:%M:%S.%f%z", errors='coerce', utc=True), axis=0)
+def datafordeler_new_events(metadata: dict):
+    mysql_engine = sql_utils.create_engine(settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'], db_type='mysql')
+    latest_date = sql_utils.get_latest_date_in_table(mysql_engine, settings.DB_SCHEMA + '.' + metadata['name'], date_col='registreringfra')
+    base_url = settings.DATAFORDELER_EVENTS_BASE_URL
+    params = {
+        'username': settings.DATAFORDLER_API_USR,
+        'password': settings.DATAFORDLER_API_PSW,
+        'page': 1,
+        'pagesize': 1000,
+        'datefrom': latest_date.strftime('%Y-%m-%d'), # virkningFra ??
+        'dateto' : datetime.today().strftime('%Y-%m-%d'),
+    }
+    scroll = True
+    start_time = utils.time_now()
+    while scroll:
+        logging.info(str(utils.time_now() - start_time) + " now page: " + str(params["page"]))
+        res = requests.get(base_url, params=params).text
+        replace_dct = {
+            "æ" : "ae",
+            "ø" : "oe",
+            "å" : "aa",
+            }
+        res = utils.multiple_replace(replace_dct, res, flags=re.IGNORECASE)
+        res = json.loads(res)
+        
+        events = jmespath.search(f'[].Message.Grunddatabesked.Haendelsesbesked.Beskedkuvert.Filtreringsdata \
+                                  .{{beskedtype: beskedtype, status: to_number(Objektregistrering[0].status), \
+                                   id: Objektregistrering[0].objektID, objektansvarlig: Objektregistrering[0].objektansvarligAktoer, \
+                                   objekttype: Objektregistrering[0].objekttype}} \
+                                    | [?contains(`{settings.DATAFORDELER_ACCEPTED_STATUSCODES}`, status)]', 
+                                 res)
+
+        for event in events:
+            logging.info(f'updating event: {event}')
+            metadata = get_metadata_for_objecttype(event['objekttype'])
+            df = get_object(id=event['id'], metadata=metadata)
+            if 'Create' in event['beskedtype']:
+                df.to_sql(
+                    name=metadata["name"], con=mysql_engine,
+                    index=False, schema=settings.DB_SCHEMA,
+                    if_exists='append')
+            elif 'Update' in event['beskedtype']:
+                # update date_to dates
+                date_from_cols = [col for col in metadata['datetime_columns'] if 'fra' in col]
+                update_dct = df.loc[0, date_from_cols]. \
+                    rename(lambda x: x.replace('fra', 'til')).to_dict()
+                index_dct = {'id_lokalid': event['id']}
+                sql_utils.update_table(mysql_engine, settings.DB_SCHEMA + '.' + metadata['name'],
+                                       update_dct, index_dct)
+                df.to_sql(
+                    name=metadata["name"], con=mysql_engine,
+                    index=False, schema=settings.DB_SCHEMA,
+                    if_exists='append')
+
+
+        scroll = True if res else False
+        params["page"] += 1
+        time.sleep(settings.DATAFORDELER_API_SLEEP_TIME)
+        if params["page"] > 5:
+            break
+
+def get_object(id: str, metadata: dict):
+    base_url = settings.DATAFORDELER_BASE_URL
+    url = base_url + metadata['objekttype'].lower()
+    params = {
+        'username': settings.DATAFORDLER_API_USR,
+        'password': settings.DATAFORDLER_API_PSW,
+        'Id': id,
+    }
+    res = requests.get(url, params).json()
+    # Lower case keys
+    res = [dict((k.lower(), v) for k, v in d.items()) for d in res]
+    df = pd.DataFrame(res, columns=metadata['columns'])
+    df[metadata["datetime_columns"]] = \
+        df[metadata["datetime_columns"]].apply(
+        lambda x: pd.to_datetime(x, format=metadata['datetime_format'],
+        errors='coerce', utc=True), axis=0)
     return df
 
-def datafordeler_new_events(metadata: dict, metadata_file: str):
+@functools.lru_cache
+def get_metadata_for_objecttype(objekttype: str):
+    for metadata_file in metadata_filelst:
+        metadata = utils.read_json(metadata_file)
+
+        if metadata['objekttype'] == objekttype:
+            return metadata
+        else:
+            pass
+
 
 def main():
+    logger = utils.get_logger('printyboi.log')
     # Load in source meta data
     metadata_filelst = glob.glob(settings.METADATA_PATH.absolute().as_posix() + '/*.json')
     mysql_engine = sql_utils.create_engine(settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'], db_type='mysql')
     
     for metadata_file in metadata_filelst:
         metadata = utils.read_json(metadata_file)
-        if not sql_utils.table_exists(mysql_engine, settings.MARIADB_CONFIG['db'], metadata["name"]):
+        if not sql_utils.table_exists(mysql_engine, settings.DB_SCHEMA, metadata["name"]):
             """Ingest a brand new table into database"""
-            df = datafordeler_initial_parser(metadata_file, metadata)
-            df.to_sql(name=metadata["name"], con=mysql_engine, index=False, schema=settings.MARIADB_CONFIG['db'], if_exists='append', method="multi")
+            datafordeler_initial_parser(metadata, metadata_file)
         else:
             """Ingest new events into database"""
-            df = datafordeler_new_events(etadata_file, metadata)
+            datafordeler_new_events(metadata)
 
 
 if __name__ == '__main__':
     main()
-
-#TODO:
-# Change schemas to a settings var instead of DB from settings
-
-
-# Create database engine
-input_engine = utils.create_mysql_engine(**db_input_config)
-
-# Check table existance
-if utils.check_table_existence(metadata["name"], db_input_config["db"], input_engine):
-    #update table with events
-else:
-    # Initialize the beast!
-    schema_path = metadata["schema_path"]
-    db_schema = utils.parse_datafordeler_schema(schema_path)
-
-    # List of column names
-    columns = list(schema.keys())
-    # List of all date-time variables
-    datetime_columns = [k for k,v in schema.items() if "date-time" in v]
-
-    create_table_query, columns, datetime_columns = utils.gen_mysql_query(path_to_json, db_input_config["db"], metadata["name"])
-    utils.create_sql_table(create_table_query, input_engine)
-
-    # Create pd dataframe consistent with sql table
-    metadata["columns"] = columns
-    metadata["datetime_columns"] = datetime_columns 
-    utils.write_json(metadata, path_to_src_metadata)
-    
-    # Get data from source API
-    rest_url = metadata["endpoint_all"]
-    pars = {'username': 'XBNOBAOZNU', 
-    'password': 'HejHej-1234', "page": 1, "pagesize": 1000}
-    # Request data
-    output = requests.get(rest_url, params=pars).text
-    # Flatten dict
-    output = utils.dict_flattener(output)
-    # dataframe it
-    df = pd.DataFrame(output, columns = columns)
-    # Convert datecolumns to python datetimes
-    
-    for datecol in datetime_columns:
-        df.loc[:, datecol] = df.loc[:, datecol].apply(lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%d %H:%M:%S.%f") if pd.notnull(x) else x)
-    
-    df.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
-
-
-import requests #to make TMDB API calls
-
-
-output = requests.get(rest_url, params=pars).json()
-output_2 = utils.dict_flattener(output.json())
-
-
-
-if output.json():
-    print("hej")
-
-output = True
-
-requests.get(rest_url, params={"count":True, 'username': 'XBNOBAOZNU', 
-'password': 'HejHej-1234'}).text
-
-4171641 / 1000
-
-
-
-
-
-
-
-rest_url = metadata["endpoint_all"]
-pars = {'username': 'XBNOBAOZNU', 
-'password': 'HejHej-1234', "page": 1, "pagesize": 1000}
-
-t = time.time()
-output = True
-a = []
-while output:
-    print(str(time.time() - t) + " now page: " + str(pars["page"]))
-    output = requests.get(rest_url, params=pars).json()
-    output = utils.dict_flattener(output)
-    df = pd.DataFrame(output, columns = columns)
-    # Convert datecolumns to python datetimes
-    for datecol in datetime_columns:
-        df.loc[:, datecol] = df.loc[:, datecol].apply(lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%d %H:%M:%S.%f") if pd.notnull(x) else x)
-    
-    df.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
-    pars["page"] += 1
-    print(str(time.time() - t) + " next page: " + str(pars["page"]))
-    time.sleep(2)
-
-
-
-
-
-
-427 * 4175 / 60 / 60 / 
-
-
-339.6647219657898 - 427.5229036808014
-
-( 90 * 4175 ) / 60 / 60 / 24
-
-output
-
-a = pd.DataFrame(output, columns=metadata["columns"])
-
-a.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
-
-    # 
-    output = requests.get(rest_url, params=pars).json
-    # Flatten dict
-    output = utils.dict_flattener(output)
-    # dataframe it
-    df = pd.DataFrame(output, columns = columns)
-    # Convert datecolumns to python datetimes
-    for datecol in datetime_columns:
-        df.loc[:, datecol] = df.loc[:, datecol].apply(lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%d %H:%M:%S.%f") if pd.notnull(x) else x)
-    
-    df.to_sql(name=metadata["name"], con=input_engine, index=False, schema=db_input_config["db"], if_exists='append', method="multi")
-    pars["page"] += 1
-
-
-
-print("--- %s seconds ---" % (time.time() - start_time))
-
-
-output.json()
-# Extracting data from data fordeler. 
-# Dokumentation for BBR 
-# https://confluence.datafordeler.dk/pages/viewpage.action?pageId=16056582
-
-# All URLs for BBR
-# bbr_bygning_url = "https://services.datafordeler.dk//BBR/BBRPublic/1/REST/bygning?"
-bbr_enhed_url = "https://services.datafordeler.dk//BBR/BBRPublic/1/REST/enhed?"
-# bbr_ejendomsrelation_url = "https://services.datafordeler.dk//BBR/BBRPublic/1/REST/ejendomsrelation?"
-# br_sag_url = "https://services.datafordeler.dk//BBR/BBRPublic/1/REST/bbrsag?"
-# bbr_grund_url = "https://services.datafordeler.dk//BBR/BBRPublic/1/REST/grund?"
-# bbr_tekniskanlaeg_url = "https://services.datafordeler.dk//BBR/BBRPublic/1/REST/tekniskanlaeg?"
-
-pars = {'username': 'XBNOBAOZNU', 
-'password': 'HejHej-1234', "page": 2, "pagesize": 3608}
-
-# Request data
-output = requests.get(bbr_enhed_url, params=pars).text
-# Flatten dict
-output = utils.dict_flattener(output)
-# Lowercase all keys to be consistent with postgresql.
-
-# Create dataframe that's consistent with db table structure. 
-bbr_enhed = pd.DataFrame(output, columns = column_names)
-
-# Push to DB
-bbr_enhed.to_sql(name="bbr_enhed", con=input_engine, index=False, schema='input', if_exists='append', method="multi")
-
-
-# Pull hændelser BBR
-"https://services.datafordeler.dk/system/EventMessages/1.0.0/custom?datefrom=2020-01-01&dateto=2020-02-01&username=<some_username>&password=<some_password>&format=Json&page=1&pagesize=1000"
-
-
-from datetime import datetime
-d = datetime.strptime(bbr_enhed.iloc[-10, 0], "%Y-%m-%dT%H:%M:%S.%f%z")
-d = d.replace(tzinfo=None)
-
-
-bbr_enhed.iloc[-10, 0]
-
-s[0:10]
-
-
-d.strftime("%Y-%m-%dT%H:%M:%S")
-
-
-
-### Generating configs
-#Get the configparser object
-config_object = ConfigParser()
-
-#Assume we need 2 sections in the config file, let's call them USERINFO and SERVERCONFIG
-config_object["SQLSERVERCONFIG"] = {
-    "host": "cubus.cxxwabvgrdub.eu-central-1.rds.amazonaws.com",
-    "port": "3306",
-    "db": "input"
-}
-
-#Write the above sections to config.ini file
-with open('config.ini', 'w') as conf:
-    config_object.write(conf)
-
-
-config_object = ConfigParser()
-config_object.read("config.ini")
-
-config_object["SQLSERVERCONFIG"]["host"]
