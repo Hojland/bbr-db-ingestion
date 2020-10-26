@@ -17,7 +17,7 @@
           "null"
         ]
       },
-      "bygningPåFremmedGrund": {
+      "bygningPaaFremmedGrund": {
         "description": "EAID_dst21CE45_7C49_4653_B220_8583C4941A98",
         "type": [
           "string",
@@ -59,14 +59,14 @@
           "null"
         ]
       },
-      "forretningshændelse": {
+      "forretningshaendelse": {
         "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
         "type": [
           "string",
           "null"
         ]
       },
-      "forretningsområde": {
+      "forretningsomraade": {
         "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
         "type": [
           "string",
@@ -109,7 +109,7 @@
         ],
         "format": "date-time"
       },
-      "registreringsaktør": {
+      "registreringsaktoer": {
         "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
         "type": [
           "string",
@@ -153,7 +153,7 @@
         ],
         "format": "date-time"
       },
-      "virkningsaktør": {
+      "virkningsaktoer": {
         "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
         "type": [
           "string",

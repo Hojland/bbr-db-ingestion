@@ -5,3 +5,4 @@ ijson
 requests
 tqdm
 jmespath
+beautifulsoup4

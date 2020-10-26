@@ -10,14 +10,14 @@
         "description": "UpdateTimestamp()",
         "format": "date-time"
       },
-      "forretningshændelse": {
+      "forretningshaendelse": {
         "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
         "type": [
           "string",
           "null"
         ]
       },
-      "forretningsområde": {
+      "forretningsomraade": {
         "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
         "type": [
           "string",
@@ -38,7 +38,7 @@
           "null"
         ]
       },
-      "gru010Afløbsforhold": {
+      "gru010Afloebsforhold": {
         "description": "EAID_AE5AC661_BFA6_4fa2_8210_A3043E6F1721",
         "type": [
           "string",
@@ -59,7 +59,7 @@
           "null"
         ]
       },
-      "gru023PåbudVedrSpildevandsafledning": {
+      "gru023PaabudVedrSpildevandsafledning": {
         "description": "EAID_54B03620_684B_4f51_8F6E_6C8C2405B98C",
         "type": [
           "string",
@@ -74,14 +74,14 @@
         ],
         "format": "date-time"
       },
-      "gru025TilladelseTilUdtræden": {
+      "gru025TilladelseTilUdtraeden": {
         "description": "EAID_039C6FD1_A8C3_438b_B701_825B2751E3DE",
         "type": [
           "string",
           "null"
         ]
       },
-      "gru026DatoForTilladelseTilUdtræden": {
+      "gru026DatoForTilladelseTilUdtraeden": {
         "description": "EAID_545F6FFE_D80C_4a6c_ADFA_9E26FDD2D24D",
         "type": [
           "string",
@@ -162,7 +162,7 @@
         ],
         "format": "date-time"
       },
-      "registreringsaktør": {
+      "registreringsaktoer": {
         "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
         "type": [
           "string",
@@ -192,7 +192,7 @@
         ],
         "format": "date-time"
       },
-      "virkningsaktør": {
+      "virkningsaktoer": {
         "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
         "type": [
           "string",
@@ -235,7 +235,7 @@
               "null"
             ]
           },
-          "bygningPåFremmedGrund": {
+          "bygningPaaFremmedGrund": {
             "description": "EAID_dst21CE45_7C49_4653_B220_8583C4941A98",
             "type": [
               "string",
@@ -277,14 +277,14 @@
               "null"
             ]
           },
-          "forretningshændelse": {
+          "forretningshaendelse": {
             "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
             "type": [
               "string",
               "null"
             ]
           },
-          "forretningsområde": {
+          "forretningsomraade": {
             "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
             "type": [
               "string",
@@ -327,7 +327,7 @@
             ],
             "format": "date-time"
           },
-          "registreringsaktør": {
+          "registreringsaktoer": {
             "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
             "type": [
               "string",
@@ -371,7 +371,7 @@
             ],
             "format": "date-time"
           },
-          "virkningsaktør": {
+          "virkningsaktoer": {
             "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
             "type": [
               "string",

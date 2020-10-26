@@ -10,14 +10,14 @@
         "description": "UpdateTimestamp()",
         "format": "date-time"
       },
-      "forretningshændelse": {
+      "forretningshaendelse": {
         "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
         "type": [
           "string",
           "null"
         ]
       },
-      "forretningsområde": {
+      "forretningsomraade": {
         "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
         "type": [
           "string",
@@ -60,7 +60,7 @@
         ],
         "format": "date-time"
       },
-      "registreringsaktør": {
+      "registreringsaktoer": {
         "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
         "type": [
           "string",
@@ -98,7 +98,7 @@
         ],
         "format": "date-time"
       },
-      "sag004ForventetPåbegyndelsesdato": {
+      "sag004ForventetPaabegyndelsesdato": {
         "description": "EAID_52477D8B_E38B_437e_BBC4_1CFC01AFB6FE",
         "type": [
           "string",
@@ -106,7 +106,7 @@
         ],
         "format": "date-time"
       },
-      "sag005Påbegyndelsesdato": {
+      "sag005Paabegyndelsesdato": {
         "description": "EAID_CB256EE7_79C5_4a0e_99B7_B4D0791D1433",
         "type": [
           "string",
@@ -122,7 +122,7 @@
         ],
         "format": "date-time"
       },
-      "sag007Henlæggelse": {
+      "sag007Henlaeggelse": {
         "description": "EAID_76DA68F2_FEBE_4722_80A9_2DDBD1F344AE",
         "type": [
           "string",
@@ -130,14 +130,14 @@
         ],
         "format": "date-time"
       },
-      "sag008FærdigtBygningsareal": {
+      "sag008FaerdigtBygningsareal": {
         "description": "EAID_314537D6_8C7E_4832_99AD_420B35201F94",
         "type": [
           "integer",
           "null"
         ]
       },
-      "sag009ForventetFuldførtDato": {
+      "sag009ForventetFuldfoertDato": {
         "description": "EAID_295DF59C_5C6E_41e2_B746_B4F51D2EFF26",
         "type": [
           "string",
@@ -145,7 +145,7 @@
         ],
         "format": "date-time"
       },
-      "sag010FuldførelseAfByggeri": {
+      "sag010FuldfoerelseAfByggeri": {
         "description": "EAID_DCB9D69B_7898_4d92_9244_661E916420BF",
         "type": [
           "string",
@@ -176,14 +176,14 @@
         ],
         "format": "date-time"
       },
-      "sag017ForeløbigFærdiggjortBygningsareal": {
+      "sag017ForeloebigFaerdiggjortBygningsareal": {
         "description": "EAID_68E3D8A3_F1AD_4983_B98D_11F41EE40056",
         "type": [
           "integer",
           "null"
         ]
       },
-      "sag018ForeløbigFærdiggjortAntalLejligheder": {
+      "sag018ForeloebigFaerdiggjortAntalLejligheder": {
         "description": "EAID_7E080221_F45F_41fe_8F97_BCEF56D5F6F3",
         "type": [
           "integer",
@@ -197,7 +197,7 @@
           "null"
         ]
       },
-      "sag024DatoForModtagelseAfAnsøgningOmByggetilladelse": {
+      "sag024DatoForModtagelseAfAnsoegningOmByggetilladelse": {
         "description": "EAID_E58EC61F_9EE0_4372_B8BA_2C2320428FB8",
         "type": [
           "string",
@@ -205,7 +205,7 @@
         ],
         "format": "date-time"
       },
-      "sag025DatoForFyldestgørendeAnsøgning": {
+      "sag025DatoForFyldestgoerendeAnsoegning": {
         "description": "EAID_8D2B8BFE_8624_4efc_A959_B44DD502E7AB",
         "type": [
           "string",
@@ -221,7 +221,7 @@
         ],
         "format": "date-time"
       },
-      "sag027DatoForFærdigbehandlingAfNaboorientering": {
+      "sag027DatoForFaerdigbehandlingAfNaboorientering": {
         "description": "EAID_89FC5530_E331_406b_9D4B_08196CD1A185",
         "type": [
           "string",
@@ -236,7 +236,7 @@
           "null"
         ]
       },
-      "sag033ForeløbigFærdiggjortAntalLejlighederUdenKøkken": {
+      "sag033ForeloebigFaerdiggjortAntalLejlighederUdenKoekken": {
         "description": "EAID_E93C5D1F_538F_4f9f_84EB_0DF7F9D877C2",
         "type": [
           "integer",
@@ -258,7 +258,7 @@
         ],
         "format": "date-time"
       },
-      "virkningsaktør": {
+      "virkningsaktoer": {
         "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
         "type": [
           "string",
@@ -303,14 +303,14 @@
                     "null"
                   ]
                 },
-                "forretningshændelse": {
+                "forretningshaendelse": {
                   "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
                   "type": [
                     "string",
                     "null"
                   ]
                 },
-                "forretningsområde": {
+                "forretningsomraade": {
                   "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
                   "type": [
                     "string",
@@ -360,7 +360,7 @@
                   ],
                   "format": "date-time"
                 },
-                "registreringsaktør": {
+                "registreringsaktoer": {
                   "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
                   "type": [
                     "string",
@@ -410,7 +410,7 @@
                     "null"
                   ]
                 },
-                "sagsdataTekniskAnlæg": {
+                "sagsdataTekniskAnlaeg": {
                   "description": "EAID_dst4FBB79_2242_4424_8583_50ED2E237F11",
                   "type": [
                     "string",
@@ -459,7 +459,7 @@
                     "null"
                   ]
                 },
-                "stamdataTekniskAnlæg": {
+                "stamdataTekniskAnlaeg": {
                   "description": "EAID_dst6BB57E_DF69_4d6c_B5D6_F941B00933C7",
                   "type": [
                     "string",
@@ -481,7 +481,7 @@
                   ],
                   "format": "date-time"
                 },
-                "virkningsaktør": {
+                "virkningsaktoer": {
                   "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
                   "type": [
                     "string",

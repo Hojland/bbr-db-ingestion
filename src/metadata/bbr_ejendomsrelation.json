@@ -1,0 +1,39 @@
+{
+    "name": "bbr_ejendomsrelation",
+    "schema_name": "BBR_2.4.4_EjendomsRelation.schema.json",
+    "objekttype": "EjendomsRelation",
+    "columns": [
+        "datafordeleropdateringstid",
+        "bfenummer",
+        "bygningpaafremmedgrund",
+        "ejendommensejerforholdskode",
+        "ejendomsnummer",
+        "ejendomstype",
+        "ejerlejlighed",
+        "ejerlejlighedsnummer",
+        "forretningshaendelse",
+        "forretningsomraade",
+        "forretningsproces",
+        "id_lokalid",
+        "id_namespace",
+        "kommunekode",
+        "registreringfra",
+        "registreringsaktoer",
+        "registreringtil",
+        "samletfastejendom",
+        "status",
+        "tinglystareal",
+        "virkningfra",
+        "virkningsaktoer",
+        "virkningtil",
+        "vurderingsejendomsnummer"
+    ],
+    "datetime_columns": [
+        "datafordeleropdateringstid",
+        "registreringfra",
+        "registreringtil",
+        "virkningfra",
+        "virkningtil"
+    ],
+    "datetime_format": "%Y-%m-%dT%H:%M:%S.%f%z"
+}

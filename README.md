@@ -19,13 +19,17 @@ statuscode: https://teknik.bbr.dk/kodelister/0/1/0/Livscyklus
 
 
 # TODO
-0. read a lot on BBR and how it works on datafordeler
 01. add all the metadata files we want, and store them in s3 bucket
 1. change to push implementation to endpoint using serverless
-2. figure out how to make service to switch codes to actual values from https://teknik.bbr.dk/kodelister/0/1/0
-3. figure out how often there are different status_codes and how we should respond differently to all of them? We shouldn't update date_to if it was wrongly registered etc
 4. make indexes when making whole new stuff
+5. function to get historic data
 
 
 # NOTICE
 Id in pull hændelses is the id_lokalId variable
+
+how to query: https://teknik.bbr.dk/file/664541/DAF-Transition-Guide-for-BBR-Consumers-11.pdf
+
+bitemporality documentation: https://confluence.datafordeler.dk/display/DML/Bitemporalitet+-+dokumentation
+
+system documentation: https://teknik.bbr.dk/systemdokumentation

@@ -24,14 +24,14 @@
           "null"
         ]
       },
-      "forretningshændelse": {
+      "forretningshaendelse": {
         "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
         "type": [
           "string",
           "null"
         ]
       },
-      "forretningsområde": {
+      "forretningsomraade": {
         "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
         "type": [
           "string",
@@ -95,7 +95,7 @@
         ],
         "format": "date-time"
       },
-      "registreringsaktør": {
+      "registreringsaktoer": {
         "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
         "type": [
           "string",
@@ -117,7 +117,7 @@
           "null"
         ]
       },
-      "tek007Anlægsnummer": {
+      "tek007Anlaegsnummer": {
         "description": "EAID_F861F88D_961A_424d_89DC_354C842F73F5",
         "type": [
           "integer",
@@ -145,28 +145,28 @@
           "null"
         ]
       },
-      "tek023EksternNøgle": {
+      "tek023EksternNoegle": {
         "description": "EAID_EF6037E3_E41A_42d8_A8D0_0BAB880C3BC0",
         "type": [
           "string",
           "null"
         ]
       },
-      "tek024Etableringsår": {
+      "tek024Etableringsaar": {
         "description": "EAID_A28843A8_268B_4f21_AEC1_9AD3D61099F1",
         "type": [
           "integer",
           "null"
         ]
       },
-      "tek025TilOmbygningsår": {
+      "tek025TilOmbygningsaar": {
         "description": "EAID_70368BB5_96B6_4a73_85E9_D5CE25C3519A",
         "type": [
           "integer",
           "null"
         ]
       },
-      "tek026StørrelsesklasseOlietank": {
+      "tek026StoerrelsesklasseOlietank": {
         "description": "EAID_3615AD87_547C_49db_B2F7_ECDDBFF46728",
         "type": [
           "string",
@@ -180,7 +180,7 @@
           "null"
         ]
       },
-      "tek028SløjfningOlietank": {
+      "tek028SloejfningOlietank": {
         "description": "EAID_8467EEB8_DC38_4a15_9B37_F13471CF873A",
         "type": [
           "string",
@@ -201,7 +201,7 @@
           "null"
         ]
       },
-      "tek032Størrelse": {
+      "tek032Stoerrelse": {
         "description": "EAID_97573D86_0023_477b_8FBD_B61ED68CB93F",
         "type": [
           "integer",
@@ -222,7 +222,7 @@
           "null"
         ]
       },
-      "tek035SløjfningsfristOlietank": {
+      "tek035SloejfningsfristOlietank": {
         "description": "EAID_101B03E9_C7F0_4b3a_9FD9_E97D8219ED7A",
         "type": [
           "string",
@@ -244,7 +244,7 @@
           "null"
         ]
       },
-      "tek038Højde": {
+      "tek038Hoejde": {
         "description": "EAID_6B03EF1F_6E85_4749_B9E2_554125CB92C0",
         "type": [
           "integer",
@@ -280,7 +280,7 @@
           "null"
         ]
       },
-      "tek067Fabrikationsår": {
+      "tek067Fabrikationsaar": {
         "description": "EAID_FBB70EB5_F819_4d9d_902D_A953E0A3DC92",
         "type": [
           "integer",
@@ -301,7 +301,7 @@
           "null"
         ]
       },
-      "tek070DatoForSenestUdførteSupplerendeIndvendigKorrosionsbeskyttelse": {
+      "tek070DatoIndvendigKorrosionsBeskyttelse": {
         "description": "EAID_ABB0EADF_03BA_4e2a_AF8D_1D5A69632E74",
         "type": [
           "string",
@@ -309,21 +309,21 @@
         ],
         "format": "date-time"
       },
-      "tek072Sløjfningsår": {
+      "tek072Sloejfningsaar": {
         "description": "EAID_DA1606E1_23C4_4d20_AA11_9F4CF68F04B2",
         "type": [
           "integer",
           "null"
         ]
       },
-      "tek073Navhøjde": {
+      "tek073Navhoejde": {
         "description": "EAID_19CDFB5B_5779_4dca_A70F_7F1AE04A2F3A",
         "type": [
           "number",
           "null"
         ]
       },
-      "tek074Vindmøllenummer": {
+      "tek074Vindmoellenummer": {
         "description": "EAID_AA5EDB03_C253_444c_9ED2_9A9E330255CF",
         "type": [
           "integer",
@@ -337,21 +337,21 @@
           "null"
         ]
       },
-      "tek076KildeTilKoordinatsæt": {
+      "tek076KildeTilKoordinatsaet": {
         "description": "EAID_C89F96F8_D1D0_40c5_82B7_C016624FBEF4",
         "type": [
           "string",
           "null"
         ]
       },
-      "tek077KvalitetAfKoordinatsæt": {
+      "tek077KvalitetAfKoordinatsaet": {
         "description": "EAID_02A53158_D48B_4e3a_A9C9_6C5B9FEF62FA",
         "type": [
           "string",
           "null"
         ]
       },
-      "tek078SupplerendeOplysningOmKoordinatsæt": {
+      "tek078SupplerendeOplysningOmKoordinatsaet": {
         "description": "EAID_E2478871_C386_40c4_BED7_20D709C43816",
         "type": [
           "string",
@@ -366,7 +366,7 @@
         ],
         "format": "date-time"
       },
-      "tek102FabrikatVindmølle": {
+      "tek102FabrikatVindmoelle": {
         "description": "EAID_4912CEF7_3C1A_4412_A068_AC428BD925C7",
         "type": [
           "string",
@@ -380,14 +380,14 @@
           "null"
         ]
       },
-      "tek104FabrikatSolcelleanlægSolvarme": {
+      "tek104FabrikatSolcelleanlaegSolvarme": {
         "description": "EAID_3F0BB9E5_16EC_4d37_9154_EA76BCC8AB7B",
         "type": [
           "string",
           "null"
         ]
       },
-      "tek105OverdækningTank": {
+      "tek105OverdaekningTank": {
         "description": "EAID_F7459E8F_D4D3_4349_853B_060446170553",
         "type": [
           "string",
@@ -402,7 +402,7 @@
         ],
         "format": "date-time"
       },
-      "tek107PlaceringPåSøterritorie": {
+      "tek107PlaceringPaaSoeterritorie": {
         "description": "EAID_3AB1319C_43B9_47bf_BCB4_37B1B743349B",
         "type": [
           "string",
@@ -453,7 +453,7 @@
         ],
         "format": "date-time"
       },
-      "virkningsaktør": {
+      "virkningsaktoer": {
         "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
         "type": [
           "string",
@@ -468,7 +468,7 @@
         ],
         "format": "date-time"
       },
-      "bygningPåFremmedGrund": {
+      "bygningPaaFremmedGrund": {
         "description": "EAID_0E5C322B_0AA8_4005_B17E_F0397230EE7D",
         "type": "object",
         "properties": {
@@ -485,7 +485,7 @@
               "null"
             ]
           },
-          "bygningPåFremmedGrund": {
+          "bygningPaaFremmedGrund": {
             "description": "EAID_dst21CE45_7C49_4653_B220_8583C4941A98",
             "type": [
               "string",
@@ -527,14 +527,14 @@
               "null"
             ]
           },
-          "forretningshændelse": {
+          "forretningshaendelse": {
             "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
             "type": [
               "string",
               "null"
             ]
           },
-          "forretningsområde": {
+          "forretningsomraade": {
             "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
             "type": [
               "string",
@@ -577,7 +577,7 @@
             ],
             "format": "date-time"
           },
-          "registreringsaktør": {
+          "registreringsaktoer": {
             "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
             "type": [
               "string",
@@ -621,7 +621,7 @@
             ],
             "format": "date-time"
           },
-          "virkningsaktør": {
+          "virkningsaktoer": {
             "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
             "type": [
               "string",
@@ -665,7 +665,7 @@
               "null"
             ]
           },
-          "bygningPåFremmedGrund": {
+          "bygningPaaFremmedGrund": {
             "description": "EAID_dst21CE45_7C49_4653_B220_8583C4941A98",
             "type": [
               "string",
@@ -707,14 +707,14 @@
               "null"
             ]
           },
-          "forretningshændelse": {
+          "forretningshaendelse": {
             "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
             "type": [
               "string",
               "null"
             ]
           },
-          "forretningsområde": {
+          "forretningsomraade": {
             "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
             "type": [
               "string",
@@ -757,7 +757,7 @@
             ],
             "format": "date-time"
           },
-          "registreringsaktør": {
+          "registreringsaktoer": {
             "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
             "type": [
               "string",
@@ -801,7 +801,7 @@
             ],
             "format": "date-time"
           },
-          "virkningsaktør": {
+          "virkningsaktoer": {
             "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
             "type": [
               "string",

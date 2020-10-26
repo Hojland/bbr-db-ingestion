@@ -8,18 +8,19 @@ def create_sql_table(engine: sqlalchemy.engine, datafordeler_schema: dict, schem
         col_type = k
         if "date-time" in v:
             col_type += " DATETIME"
-        else:
-            if "string" in v:
-                col_type += " TEXT"
-            elif "integer" in v:
-                col_type += " INT"
+        elif "string" in v:
+            col_type += " TEXT"
+        elif "integer" in v:
+            col_type += " INT"
+        elif 'number' in v:
+            col_type += " FLOAT"
         
         if "null" not in v and "_" not in k:
             col_type += " NOT NULL"
         
         columns.append(col_type)
 
-    columns_str = ", ".join([c for c in columns])
+    columns_str = ", ".join(columns)
     create_table_query = f"""CREATE TABLE {schema_name}.{table_name} ({columns_str});"""
     
     with engine.connect() as con:

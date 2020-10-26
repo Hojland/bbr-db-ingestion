@@ -22,7 +22,9 @@ DATAFORDELER_EVENTS_BASE_URL = 'https://services.datafordeler.dk/system/EventMes
 DATAFORDLER_API_USR = os.environ["DATAFORDLER_API_USR"]
 DATAFORDLER_API_PSW = os.environ["DATAFORDLER_API_PSW"]
 DATAFORDELER_API_SLEEP_TIME = 0 # 4 sec of waittime for processing
-DATAFORDELER_ACCEPTED_STATUSCODES = [6, 7, 8, 9, 18]
+DATAFORDELER_ACCEPTED_STATUSCODES = ['6', '7', '9']
+DATAFORDELER_CODELIST_URL = 'https://teknik.bbr.dk/kodelister/0/1/0/'
+
 
 SCHEMA_PATH = Path('schemas')
 METADATA_PATH = Path('metadata')

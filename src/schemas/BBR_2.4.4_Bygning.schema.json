@@ -24,35 +24,35 @@
           "null"
         ]
       },
-      "byg024AntalLejlighederMedKøkken": {
+      "byg024AntalLejlighederMedKoekken": {
         "description": "EAID_F001A6B5_63FC_4f9a_8C43_849462E4BCD3",
         "type": [
           "integer",
           "null"
         ]
       },
-      "byg025AntalLejlighederUdenKøkken": {
+      "byg025AntalLejlighederUdenKoekken": {
         "description": "EAID_64E1EF7F_D403_40e2_A16C_54CCE3C2C376",
         "type": [
           "integer",
           "null"
         ]
       },
-      "byg026Opførelsesår": {
+      "byg026Opfoerelsesaar": {
         "description": "EAID_CFDB0E7D_3D5E_4122_B006_5F5A0420AE2D",
         "type": [
           "integer",
           "null"
         ]
       },
-      "byg027OmTilbygningsår": {
+      "byg027OmTilbygningsaar": {
         "description": "EAID_A8EA0FBB_4B67_402b_A347_3A09AADD4ACE",
         "type": [
           "integer",
           "null"
         ]
       },
-      "byg029DatoForMidlertidigOpførtBygning": {
+      "byg029DatoForMidlertidigOpfoertBygning": {
         "description": "EAID_EA513FD1_895E_4064_9204_FA77A02452B3",
         "type": [
           "string",
@@ -67,35 +67,35 @@
           "null"
         ]
       },
-      "byg031Afløbsforhold": {
+      "byg031Afloebsforhold": {
         "description": "EAID_CBBAEE8E_B1BC_42f9_9DA7_D931266B9409",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg032YdervæggensMateriale": {
+      "byg032YdervaeggensMateriale": {
         "description": "EAID_0DA083E6_2856_4203_8367_707640E7ECAA",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg033Tagdækningsmateriale": {
+      "byg033Tagdaekningsmateriale": {
         "description": "EAID_BE95EE4F_FE94_4338_A7EC_745BA8D69490",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg034SupplerendeYdervæggensMateriale": {
+      "byg034SupplerendeYdervaeggensMateriale": {
         "description": "EAID_476FE442_09D3_4ca8_B626_B63317218642",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg035SupplerendeTagdækningsMateriale": {
+      "byg035SupplerendeTagdaekningsMateriale": {
         "description": "EAID_D26E79F7_4C17_48bf_840D_D867D77E104B",
         "type": [
           "string",
@@ -172,14 +172,14 @@
           "null"
         ]
       },
-      "byg046SamletArealAfLukkedeOverdækningerPåBygningen": {
+      "byg046SamletArealAfLukkedeOverdaekningerPaaBygningen": {
         "description": "EAID_3DE33E89_CF62_4194_954F_7B399042B44A",
         "type": [
           "integer",
           "null"
         ]
       },
-      "byg047ArealAfAffaldsrumITerrænniveau": {
+      "byg047ArealAfAffaldsrumITerraenniveau": {
         "description": "EAID_3A2A4C01_56A7_44a3_A1C7_D3CFC756D8D3",
         "type": [
           "integer",
@@ -193,14 +193,14 @@
           "null"
         ]
       },
-      "byg049ArealAfOverdækketAreal": {
+      "byg049ArealAfOverdaekketAreal": {
         "description": "EAID_2242927B_CE72_420d_99B6_DF3B48640BF3",
         "type": [
           "integer",
           "null"
         ]
       },
-      "byg050ArealÅbneOverdækningerPåBygningenSamlet": {
+      "byg050ArealaabneOverdaekningerPaaBygningenSamlet": {
         "description": "EAID_2E4CA4D9_FE30_4ea3_A112_B2AD0A535DE2",
         "type": [
           "integer",
@@ -277,7 +277,7 @@
           "null"
         ]
       },
-      "byg071BevaringsværdighedReference": {
+      "byg071BevaringsvaerdighedReference": {
         "description": "EAID_101DE5FA_4A92_4530_9A1B_D5E48E22DA74",
         "type": [
           "string",
@@ -292,14 +292,14 @@
         ],
         "format": "date-time"
       },
-      "byg111StormrådetsOversvømmelsesSelvrisiko": {
+      "byg111StormraadetsOversvoemmelsesSelvrisiko": {
         "description": "EAID_5B820E1C_1736_4398_B023_0A572EA1E24D",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg112DatoForRegistreringFraStormrådet": {
+      "byg112DatoForRegistreringFraStormraadet": {
         "description": "EAID_246D44BD_4834_4ac2_9BC0_5CE756C4FDB5",
         "type": [
           "string",
@@ -351,7 +351,7 @@
           "null"
         ]
       },
-      "byg124PåbudVedrSpildevandsafledning": {
+      "byg124PaabudVedrSpildevandsafledning": {
         "description": "EAID_2F0897E2_6427_4174_980A_26E6A0B18D78",
         "type": [
           "string",
@@ -366,14 +366,14 @@
         ],
         "format": "date-time"
       },
-      "byg126TilladelseTilUdtræden": {
+      "byg126TilladelseTilUdtraeden": {
         "description": "EAID_0136415E_6311_4d87_A5DB_800EDFB78B5C",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg127DatoForTilladelseTilUdtræden": {
+      "byg127DatoForTilladelseTilUdtraeden": {
         "description": "EAID_8B4920F8_1744_4ba9_9109_CB4BFD5B22E3",
         "type": [
           "string",
@@ -418,35 +418,35 @@
         ],
         "format": "date-time"
       },
-      "byg133KildeTilKoordinatsæt": {
+      "byg133KildeTilKoordinatsaet": {
         "description": "EAID_3B83DF84_1AE5_4d08_972C_BDC49D01BABF",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg134KvalitetAfKoordinatsæt": {
+      "byg134KvalitetAfKoordinatsaet": {
         "description": "EAID_D540F47A_6013_4c51_8899_14B8227B3CDD",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg135SupplerendeOplysningOmKoordinatsæt": {
+      "byg135SupplerendeOplysningOmKoordinatsaet": {
         "description": "EAID_917DB1AF_E1C1_4230_92AB_073B00F002C9",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg136PlaceringPåSøterritorie": {
+      "byg136PlaceringPaaSoeterritorie": {
         "description": "EAID_FA6F6CC8_F6AB_44f2_A3C8_7D18A46B3D67",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg137BanedanmarkBygværksnummer": {
+      "byg137BanedanmarkBygvaerksnummer": {
         "description": "EAID_5AB40EC2_08D8_4db1_AD10_5326B3188E44",
         "type": [
           "string",
@@ -461,21 +461,21 @@
         ],
         "format": "date-time"
       },
-      "byg150Gulvbelægning": {
+      "byg150Gulvbelaegning": {
         "description": "EAID_55D9D4FB_1923_4e24_A29E_7A99E780C30A",
         "type": [
           "string",
           "null"
         ]
       },
-      "byg151Frihøjde": {
+      "byg151Frihoejde": {
         "description": "EAID_3B7D05CC_EC8E_4296_9974_5DF171A6219C",
         "type": [
           "number",
           "null"
         ]
       },
-      "byg152ÅbenLukketKonstruktion": {
+      "byg152aabenLukketKonstruktion": {
         "description": "EAID_B222EE77_3154_42a4_BDDD_EEC021C37FDE",
         "type": [
           "string",
@@ -503,7 +503,7 @@
           "null"
         ]
       },
-      "byg403ØvrigeBemærkningerFraStormrådet": {
+      "byg403oevrigeBemaerkningerFraStormraadet": {
         "description": "EAID_DF1C0DA9_027E_45d0_9251_6F15A9ABEA53",
         "type": [
           "string",
@@ -531,14 +531,14 @@
           "null"
         ]
       },
-      "forretningshændelse": {
+      "forretningshaendelse": {
         "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
         "type": [
           "string",
           "null"
         ]
       },
-      "forretningsområde": {
+      "forretningsomraade": {
         "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
         "type": [
           "string",
@@ -602,7 +602,7 @@
         ],
         "format": "date-time"
       },
-      "registreringsaktør": {
+      "registreringsaktoer": {
         "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
         "type": [
           "string",
@@ -632,7 +632,7 @@
         ],
         "format": "date-time"
       },
-      "virkningsaktør": {
+      "virkningsaktoer": {
         "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
         "type": [
           "string",
@@ -698,14 +698,14 @@
                     "null"
                   ]
                 },
-                "eta022Kælderareal": {
+                "eta022Kaelderareal": {
                   "description": "EAID_6474A81D_3F66_42e5_A432_1C6BA889D0D9",
                   "type": [
                     "integer",
                     "null"
                   ]
                 },
-                "eta023ArealAfLovligBeboelseIKælder": {
+                "eta023ArealAfLovligBeboelseIKaelder": {
                   "description": "EAID_BA8E9E7B_7467_47d7_A0C9_2514F09662BF",
                   "type": [
                     "integer",
@@ -726,7 +726,7 @@
                     "null"
                   ]
                 },
-                "eta026ErhvervIKælder": {
+                "eta026ErhvervIKaelder": {
                   "description": "EAID_69D093D3_AD77_4cf6_8158_00D78A6CD6BE",
                   "type": [
                     "integer",
@@ -740,14 +740,14 @@
                     "null"
                   ]
                 },
-                "forretningshændelse": {
+                "forretningshaendelse": {
                   "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
                   "type": [
                     "string",
                     "null"
                   ]
                 },
-                "forretningsområde": {
+                "forretningsomraade": {
                   "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
                   "type": [
                     "string",
@@ -790,7 +790,7 @@
                   ],
                   "format": "date-time"
                 },
-                "registreringsaktør": {
+                "registreringsaktoer": {
                   "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
                   "type": [
                     "string",
@@ -820,7 +820,7 @@
                   ],
                   "format": "date-time"
                 },
-                "virkningsaktør": {
+                "virkningsaktoer": {
                   "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
                   "type": [
                     "string",
@@ -880,14 +880,14 @@
                     "null"
                   ]
                 },
-                "forretningshændelse": {
+                "forretningshaendelse": {
                   "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
                   "type": [
                     "string",
                     "null"
                   ]
                 },
-                "forretningsområde": {
+                "forretningsomraade": {
                   "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
                   "type": [
                     "string",
@@ -951,7 +951,7 @@
                   ],
                   "format": "date-time"
                 },
-                "registreringsaktør": {
+                "registreringsaktoer": {
                   "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
                   "type": [
                     "string",
@@ -981,7 +981,7 @@
                   ],
                   "format": "date-time"
                 },
-                "virkningsaktør": {
+                "virkningsaktoer": {
                   "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
                   "type": [
                     "string",
@@ -1048,7 +1048,7 @@
                     "null"
                   ]
                 },
-                "for004FordelingsNøgle": {
+                "for004FordelingsNoegle": {
                   "description": "EAID_429C3249_3EE0_48e1_94C3_CD216571AE7A",
                   "type": [
                     "string",
@@ -1076,14 +1076,14 @@
                     "null"
                   ]
                 },
-                "forretningshændelse": {
+                "forretningshaendelse": {
                   "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
                   "type": [
                     "string",
                     "null"
                   ]
                 },
-                "forretningsområde": {
+                "forretningsomraade": {
                   "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
                   "type": [
                     "string",
@@ -1126,7 +1126,7 @@
                   ],
                   "format": "date-time"
                 },
-                "registreringsaktør": {
+                "registreringsaktoer": {
                   "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
                   "type": [
                     "string",
@@ -1156,7 +1156,7 @@
                   ],
                   "format": "date-time"
                 },
-                "virkningsaktør": {
+                "virkningsaktoer": {
                   "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
                   "type": [
                     "string",
@@ -1196,7 +1196,7 @@
               "null"
             ]
           },
-          "bygningPåFremmedGrund": {
+          "bygningPaaFremmedGrund": {
             "description": "EAID_dst21CE45_7C49_4653_B220_8583C4941A98",
             "type": [
               "string",
@@ -1238,14 +1238,14 @@
               "null"
             ]
           },
-          "forretningshændelse": {
+          "forretningshaendelse": {
             "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
             "type": [
               "string",
               "null"
             ]
           },
-          "forretningsområde": {
+          "forretningsomraade": {
             "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
             "type": [
               "string",
@@ -1288,7 +1288,7 @@
             ],
             "format": "date-time"
           },
-          "registreringsaktør": {
+          "registreringsaktoer": {
             "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
             "type": [
               "string",
@@ -1332,7 +1332,7 @@
             ],
             "format": "date-time"
           },
-          "virkningsaktør": {
+          "virkningsaktoer": {
             "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
             "type": [
               "string",
@@ -1359,7 +1359,7 @@
           "id_lokalId"
         ]
       },
-      "bygningPåFremmedGrundList": {
+      "bygningPaaFremmedGrundList": {
         "description": "EAID_0E5C322B_0AA8_4005_B17E_F0397230EE7D",
         "type": "array",
         "items": {
@@ -1372,7 +1372,7 @@
 				"null"
 			  ]
 			},
-            "bygningPåFremmedGrund": {
+            "bygningPaaFremmedGrund": {
               "description": "EAID_0E5C322B_0AA8_4005_B17E_F0397230EE7D",
               "type": "object",
               "properties": {
@@ -1389,7 +1389,7 @@
                     "null"
                   ]
                 },
-                "bygningPåFremmedGrund": {
+                "bygningPaaFremmedGrund": {
                   "description": "EAID_dst21CE45_7C49_4653_B220_8583C4941A98",
                   "type": [
                     "string",
@@ -1431,14 +1431,14 @@
                     "null"
                   ]
                 },
-                "forretningshændelse": {
+                "forretningshaendelse": {
                   "description": "EAID_50066AF4_06D9_4f3a_BAC2_5F83ABF0E335",
                   "type": [
                     "string",
                     "null"
                   ]
                 },
-                "forretningsområde": {
+                "forretningsomraade": {
                   "description": "EAID_C91552B7_18C0_4e28_8B06_F60332A8776B",
                   "type": [
                     "string",
@@ -1481,7 +1481,7 @@
                   ],
                   "format": "date-time"
                 },
-                "registreringsaktør": {
+                "registreringsaktoer": {
                   "description": "EAID_B3CCBA6B_52B2_4ddc_A751_ABEA39D6EE6B",
                   "type": [
                     "string",
@@ -1525,7 +1525,7 @@
                   ],
                   "format": "date-time"
                 },
-                "virkningsaktør": {
+                "virkningsaktoer": {
                   "description": "EAID_59A458B1_5844_4fe3_95B1_C38AD3AAFAF4",
                   "type": [
                     "string",
