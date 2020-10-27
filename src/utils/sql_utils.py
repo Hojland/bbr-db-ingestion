@@ -6,6 +6,10 @@ import sys
 from sqlalchemy.types import String, Integer, Numeric
 from os.path import exists, join, abspath
 import logging
+import re
+
+from utils import utils
+
 
 def create_engine(db_config: dict, db_name: str=None, db_type: str='postgres'):
     """Creates a sqlalchemy engine, with specified connection information
@@ -77,6 +81,11 @@ def table_exists(db_engine: sqlalchemy.engine, schema_name: str, table_name: str
 
 def update_table(db_engine: sqlalchemy.engine, table_name: str, update_dct: dict, index_dct: dict):
     update_string = ', '.join(f"{key}='{value}'" for key, value in update_dct.items())
+    replace_dct = {
+        "'nat'": 'NULL',
+        "'nan'": 'NULL',
+    }
+    update_string = utils.multiple_replace(replace_dct, update_string, flags=re.IGNORECASE)
     index_string = ' AND '.join(f"{key}='{value}'" for key, value in index_dct.items())
     sql_query = f'UPDATE {table_name} SET {update_string} WHERE {index_string}'
     db_engine.execute(sql_query)

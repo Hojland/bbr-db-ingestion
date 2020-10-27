@@ -2,7 +2,7 @@ import ijson
 import json
 import io
 
-def parse_datafordeler_schema(datafordeler_json_schema: dict):
+def parse_datafordeler_schema(datafordeler_json_schema: str):
     data = ijson.parse(open(datafordeler_json_schema, 'r'))
     schema = {}
     # Identify all variables and their types and format. 
@@ -11,6 +11,7 @@ def parse_datafordeler_schema(datafordeler_json_schema: dict):
             key = gen_key_name(prefix)
             schema.setdefault(key, []).append(value)
     return schema
+
 
 def gen_key_name(s: str):
     """Given a json path with seperator=. generate a key name. """

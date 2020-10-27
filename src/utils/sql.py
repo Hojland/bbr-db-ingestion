@@ -11,9 +11,11 @@ def create_sql_table(engine: sqlalchemy.engine, datafordeler_schema: dict, schem
         elif "string" in v:
             col_type += " TEXT"
         elif "integer" in v:
-            col_type += " INT"
+            col_type += " BIGINT"
         elif 'number' in v:
             col_type += " FLOAT"
+        elif 'array' in v:
+            col_type += " TEXT"
         
         if "null" not in v and "_" not in k:
             col_type += " NOT NULL"

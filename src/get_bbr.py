@@ -8,7 +8,7 @@ import ijson
 import os
 import time
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import glob
 import logging
 import re
@@ -44,8 +44,18 @@ def get_codelist(url: str):
         codelist[key] = value
     return codelist
 
+def codelist_exceptions(codelist_options: list):
+    codelist_txt = json.dumps(codelist_options)
+    replace_dct = {
+        "byganvendelse" : "bygningsanvendelse"
+    }
+    codelist_txt = utils.multiple_replace(codelist_txt, res, flags=re.IGNORECASE)
+    codelist_options = json.loads(codelist_txt)
+    return codelist_options
+
 def translate_codes(df: pd.DataFrame):
     codelist_options = get_codelist_options()
+    codelist_options = codelist_exceptions(codelist_options)
     col_parts = [option['option'] for option in codelist_options]
     short_df_col = [re.search('(?<=\d{3})(.*)', col).group(0) if re.search('\d{3}', col) else col for col in list(df)]
     col_translate = dict(zip(short_df_col, list(df)))
@@ -82,7 +92,7 @@ def datafordeler_initial_parser(metadata: dict, metadata_file: str):
         'username': settings.DATAFORDLER_API_USR,
         'password': settings.DATAFORDLER_API_PSW,
         'page': 1,
-        'pagesize': 1000,
+        'pagesize': 5000,
         'status': '|'.join(settings.DATAFORDELER_ACCEPTED_STATUSCODES)
     }
     scroll = True
@@ -104,18 +114,19 @@ def datafordeler_initial_parser(metadata: dict, metadata_file: str):
         res = datafordeler_utils.dict_flattener(res)
         # Lower case keys
         res = [dict((k.lower(), v) for k, v in d.items()) for d in res]
-        dtypes = get_dtypes_dct(schema_dct=schema, columns=metadata['columns'])
-        df = pd.DataFrame(res, columns=metadata["columns"]).astype(dtypes, errors='ignore')
+        #dtypes = get_dtypes_dct(schema_dct=schema, columns=metadata['columns'])
+        df = pd.DataFrame(res, columns=metadata["columns"])
+        df = df.convert_dtypes()
         df[metadata["datetime_columns"]] = to_datetime_format(df[metadata["datetime_columns"]], format=metadata['datetime_format'])
         df = translate_codes(df)
         df.to_sql(
             name=metadata["name"], con=mysql_engine,
             index=False, schema=settings.DB_SCHEMA,
-            if_exists='append', method="multi")
+            if_exists='append')
         scroll = True if res else False
         params["page"] += 1
         time.sleep(settings.DATAFORDELER_API_SLEEP_TIME)
-        if params["page"] > 5:
+        if params["page"] > 100:
             break
 
 def datafordeler_new_events(metadata: dict):
@@ -191,7 +202,7 @@ def datafordeler_new_events(metadata: dict):
         scroll = True if res else False
         params["page"] += 1
         time.sleep(settings.DATAFORDELER_API_SLEEP_TIME)
-        if params["page"] > 5:
+        if params["page"] > 100:
             break
 
 def get_object(id: str, metadata: dict, schema=dict):
@@ -205,8 +216,9 @@ def get_object(id: str, metadata: dict, schema=dict):
     res = requests.get(url, params).json()
     # Lower case keys
     res = [dict((k.lower(), v) for k, v in d.items()) for d in res]
-    dtypes = get_dtypes_dct(schema_dct=schema, columns=metadata['columns'])
-    df = pd.DataFrame(res, columns=metadata['columns']).astype(dtypes, errors='ignore')
+    #dtypes = get_dtypes_dct(schema_dct=schema, columns=metadata['columns'])
+    df = pd.DataFrame(res, columns=metadata['columns'])
+    df = df.convert_dtypes()
     df[metadata["datetime_columns"]] = to_datetime_format(df[metadata["datetime_columns"]], format=metadata['datetime_format'])
     return df
 
@@ -223,21 +235,22 @@ def get_dtypes_dct(schema_dct: dict, columns: list):
     return dtypes
 
 def to_datetime_format(datetime_dataframe: pd.DataFrame, format: str=None):
-    datetime_dataframe = \
-        datetime_dataframe.apply(
-        lambda x: x.where(x > '1970-01-01', '1970-01-01'), axis=0)
-    datetime_dataframe = \
-        datetime_dataframe.apply(
-        lambda x: x.where(x < (datetime.today() + timedelta(days=10*365)).strftime('%Y-%m-&d'),
-                (datetime.today() + timedelta(days=10*365)).strftime('%Y-%m-&d')), axis=0)
+    #datetime_dataframe = \
+    #    datetime_dataframe.apply(
+    #    lambda x: x.where(x > '1970-01-01', '1970-01-01'), axis=0)
+    #datetime_dataframe = \
+    #    datetime_dataframe.apply(
+    #    lambda x: x.where(x < (datetime.today() + timedelta(days=10*365)).strftime('%Y-%m-&d'),
+    #            (datetime.today() + timedelta(days=10*365)).strftime('%Y-%m-&d')), axis=0)
     datetime_dataframe = \
         datetime_dataframe.apply(
         lambda x: pd.to_datetime(x, format=format,
-        errors='coerce', utc=True), axis=0)
+        errors='coerce', utc=True).dt.strftime("%Y-%m-%d %H:%M:%S.%f"), axis=0)
     return datetime_dataframe
 
 @functools.lru_cache
 def get_metadata_for_objecttype(objekttype: str):
+    metadata_filelst = glob.glob(settings.METADATA_PATH.absolute().as_posix() + '/*.json')
     for metadata_file in metadata_filelst:
         metadata = utils.read_json(metadata_file)
 
@@ -259,8 +272,8 @@ def main():
             datafordeler_initial_parser(metadata, metadata_file)
         else:
             pass
-            """Ingest new events into database"""
-            datafordeler_new_events(metadata)
+        """Ingest new events into database"""
+        datafordeler_new_events(metadata)
 
 
 
