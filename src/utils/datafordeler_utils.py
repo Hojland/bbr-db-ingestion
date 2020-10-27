@@ -8,12 +8,10 @@ def parse_datafordeler_schema(datafordeler_json_schema: str):
     # Identify all variables and their types and format. 
     for prefix, _, value in data:
         if value and "properties" in prefix and (".type" in prefix or ".format" in prefix):
-            print(prefix, value)
             key = gen_key_name(prefix)
             schema.setdefault(key, []).append(value)
 
     schema = {key:value for (key,value) in schema.items() if "object" not in value and "array" not in value}
-
     return schema
 
 
