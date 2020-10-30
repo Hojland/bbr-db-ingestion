@@ -155,8 +155,12 @@ def table_index_exists(db_engine: sqlalchemy.engine, schema: str, table: str, in
         index_exists = False
     return index_exists
 
+def col_dtypes(db_engine: sqlalchemy.engine, schema_name: str, table_name: str):
+    res = db_engine.execute(f"SELECT column_name, data_type FROM information_schema.columns where table_schema = '{schema_name}' and table_name='{table_name}'")
+    col_dtypes = {column_name: data_type for column_name, data_type in res}
+    return col_dtypes
 
-def load_data(engine, sql_query: str):
+def load_data(engine: sqlalchemy.engine, sql_query: str):
     df_load = pd.read_sql(sql_query, engine, chunksize=20000)
     try:
         df = pd.concat([chunk for chunk in tqdm(df_load, desc='Loading data', file=sys.stdout)], ignore_index=True)

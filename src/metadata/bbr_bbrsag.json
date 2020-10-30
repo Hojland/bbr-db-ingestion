@@ -1,5 +1,5 @@
 {
-    "name": "bbr_bbrsag",
+    "name": "bbrsag",
     "schema_name": "BBR_2.4.4_BBRSag.schema.json",
     "objekttype": "BBRSag",
     "columns": [

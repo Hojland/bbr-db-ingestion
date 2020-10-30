@@ -6,3 +6,4 @@ requests
 tqdm
 jmespath
 beautifulsoup4
+aiohttp

@@ -1,5 +1,5 @@
-%load_ext autoreload
-%autoreload 2
+#%load_ext autoreload
+#%autoreload 2
 import requests
 import ast
 import pandas as pd
@@ -16,66 +16,61 @@ from pathlib import Path
 import functools
 import logging
 import jmespath
-from bs4 import BeautifulSoup
+import asyncio
+import aiohttp
+from aiohttp import ClientSession
 
 from utils import utils, sql_utils
 from utils import sql, datafordeler_utils
 import settings
 
-@functools.lru_cache
-def get_codelist_options():
-    res = requests.get(settings.DATAFORDELER_CODELIST_URL).content
-    soup = BeautifulSoup(res, features="html.parser")
-    codelist_options = []
-    for option in soup.select('option')[1:]:
-        codelist_options.append(
-            {'option': option.text.lower(),
-             'url': option['value']}
-            )
-    return codelist_options
-
-@functools.lru_cache
-def get_codelist(url: str):
-    res = requests.get(url).content
-    soup = BeautifulSoup(res, features="html.parser")
-    codelist = {}
-    for code in soup.select('.kodeliste-list li'):
-        key, value = code.text.split(' - ', maxsplit=1)
-        codelist[key] = value
-    return codelist
-
-def codelist_exceptions(codelist_options: list):
-    codelist_txt = json.dumps(codelist_options)
-    replace_dct = {
-        "byganvendelse" : "bygningsanvendelse"
+def get_count(url: str):
+    params = {
+        'username': settings.DATAFORDLER_API_USR,
+        'password': settings.DATAFORDLER_API_PSW,
+        'count': True
     }
-    codelist_txt = utils.multiple_replace(codelist_txt, res, flags=re.IGNORECASE)
-    codelist_options = json.loads(codelist_txt)
-    return codelist_options
+    res = requests.get(url, params=params).json()
+    return res['count']
 
-def translate_codes(df: pd.DataFrame):
-    codelist_options = get_codelist_options()
-    codelist_options = codelist_exceptions(codelist_options)
-    col_parts = [option['option'] for option in codelist_options]
-    short_df_col = [re.search('(?<=\d{3})(.*)', col).group(0) if re.search('\d{3}', col) else col for col in list(df)]
-    col_translate = dict(zip(short_df_col, list(df)))
-    for col in col_parts:
-        if col in short_df_col:
-            url = jmespath.search(f"[?option=='{col}'].url | [0]", codelist_options)
-            codelist_translater = get_codelist(url)
-            df[col_translate[col]] = df[col_translate[col]].replace(codelist_translater)
-    return df
+async def request_json(session: ClientSession, url: str, params: dict):
+    res = await session.get(url, params=params)
+    res = await res.text()
+    res = utils.multiple_replace(datafordeler_utils.replace_characters_dct, res, flags=re.IGNORECASE)
+    res = json.loads(res)
+    res = datafordeler_utils.dict_flattener(res)
+    res = [dict((k.lower(), v) for k, v in d.items()) for d in res]
+    return res
 
-    #for col in list(df):
-    #    match = map(col.__contains__, col_parts)
-    #    match_idx = [i for i, x in enumerate(match) if x]
-    #    if match_idx:
-    #        codelist_url_dct = codelist_options[match_idx[0]]
-    #        codelist_translater = get_codelist(codelist_url_dct['url'])
-    #        print(f"col: {col}, codelist_translater: {codelist_translater}, option: {col_parts[match_idx[0]]}")
-    #        df[col] = df[col].replace(codelist_translater)
+async def to_sql_async(engine, df: pd.DataFrame, table_name: str):
+    df.to_sql(
+        name=table_name, con=engine,
+        index=False, schema=settings.DB_SCHEMA,
+        if_exists='append')
 
-def datafordeler_initial_parser(metadata: dict, metadata_file: str):
+async def request_and_ingest(mysql_engine, session: ClientSession, params: dict, url: str, metadata: dict, queue):
+    sleeptime  = queue.get_nowait()
+    logging.info(f"Trying to sleep {sleeptime} for my little task")
+    await asyncio.sleep(sleeptime)
+    logging.info(f"Awake again and now requesting the suckers")
+    res = await request_json(session, url, params)
+    logging.info(f"Got my result, good!")
+    scroll = True if res else False
+    if not res:
+        return scroll
+    df = pd.DataFrame(res, columns=metadata["columns"])
+    df = datafordeler_utils.correct_df_according_to_datatype_limits(mysql_engine, df, settings.DB_SCHEMA, metadata["name"])
+    df = datafordeler_utils.other_ridiculous_value_exceptions(df)
+    df = df.convert_dtypes()
+    df[metadata["datetime_columns"]] = to_datetime_format(df[metadata["datetime_columns"]], format=metadata['datetime_format'])
+    #df = translate_codes(df)
+    logging.info(f"awaiting sending to database for page: {params['page']}")
+    await to_sql_async(mysql_engine, df, metadata["name"])
+    logging.info(f"I have just put some data into {metadata['name']}")
+    queue.task_done()
+    return scroll
+
+async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     schema_path = settings.SCHEMA_PATH.absolute().as_posix() + '/' + metadata["schema_name"]
     
     schema = datafordeler_utils.parse_datafordeler_schema(schema_path)
@@ -84,50 +79,49 @@ def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     metadata["datetime_columns"] = [k for k,v in schema.items() if "date-time" in v]
     utils.write_json(metadata, metadata_file)
 
-    sql.create_sql_table(mysql_engine, schema, settings.DB_SCHEMA, metadata['name'])
+    sql.create_sql_table(mysql_engine, schema, metadata, settings.DB_SCHEMA, metadata['name'])
 
     base_url = settings.DATAFORDELER_BASE_URL
     url = base_url + metadata['objekttype'].lower()
+
+    count = get_count(url)
+    pages_count = math.ceil(count/settings.DATAFORDLER_API_PAGESIZE)
     params = {
         'username': settings.DATAFORDLER_API_USR,
         'password': settings.DATAFORDLER_API_PSW,
-        'page': 1,
-        'pagesize': 5000,
-        'status': '|'.join(settings.DATAFORDELER_ACCEPTED_STATUSCODES)
+        'page': 0,
+        'pagesize': settings.DATAFORDLER_API_PAGESIZE,
+        'status': '|'.join(settings.DATAFORDELER_ACCEPTED_STATUSCODES),
     }
-    scroll = True
     start_time = utils.time_now()
-    while scroll:
-        logging.info(str(utils.time_now() - start_time) + " now page: " + str(params["page"]))
-        res = requests.get(url, params=params).text
-        replace_dct = {
-            "æ" : "ae",
-            "Æ" : "ae",
-            "ø" : "oe",
-            "Ø" : 'oe',
-            "å" : "aa",
-            'Å' : 'aa',
-            'tek070datoforsenestudfoertesupplerendeindvendigkorrosionsbeskyttelse': 'tek070datoindvendigkorrosionsbeskyttelse',
-            }
-        res = utils.multiple_replace(replace_dct, res, flags=re.IGNORECASE)
-        res = json.loads(res)
-        res = datafordeler_utils.dict_flattener(res)
-        # Lower case keys
-        res = [dict((k.lower(), v) for k, v in d.items()) for d in res]
-        #dtypes = get_dtypes_dct(schema_dct=schema, columns=metadata['columns'])
-        df = pd.DataFrame(res, columns=metadata["columns"])
-        df = df.convert_dtypes()
-        df[metadata["datetime_columns"]] = to_datetime_format(df[metadata["datetime_columns"]], format=metadata['datetime_format'])
-        df = translate_codes(df)
-        df.to_sql(
-            name=metadata["name"], con=mysql_engine,
-            index=False, schema=settings.DB_SCHEMA,
-            if_exists='append')
-        scroll = True if res else False
+    queue = asyncio.Queue()
+    tasks = []
+    session = ClientSession()
+    while params["page"] < 33: #pages_count
         params["page"] += 1
-        time.sleep(settings.DATAFORDELER_API_SLEEP_TIME)
-        if params["page"] > 100:
-            break
+        logging.info(f'Page {params["page"]} of {pages_count} getting a total of {count} rows. {str(utils.time_now() - start_time).split(".")[0]} has passed')
+        
+        logging.info(f'Trying to setup queue with {settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize()} sleeptime')
+        queue.put_nowait(settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize())
+        logging.info(f"params: {params}")
+        task = asyncio.create_task(request_and_ingest(mysql_engine, session, params.copy(), url, metadata, queue)) # scroll implemented as failure proofing
+        tasks.append(task)
+
+        if queue.qsize() > 5:
+            logging.info(f'Waiting {queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME} seconds to add to the queue')
+            logging.info(tasks)
+            # await asyncio.gather(*tasks, return_exceptions=True)
+            logging.info(f'Are we here?')
+            await queue.join()
+            #await asyncio.sleep(queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME)
+
+#        if not scroll:
+#            logging.error("You should never see me")
+
+    if not queue.empty():
+        logging.info(f'Waiting {queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME} seconds to go to next table')
+        await asyncio.sleep(queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME)
+
 
 def datafordeler_new_events(metadata: dict):
     mysql_engine = sql_utils.create_engine(settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'], db_type='mysql')
@@ -146,16 +140,7 @@ def datafordeler_new_events(metadata: dict):
     while scroll:
         logging.info(str(utils.time_now() - start_time) + " now page: " + str(params["page"]))
         res = requests.get(base_url, params=params).text
-        replace_dct = {
-            "æ" : "ae",
-            "Æ" : "ae",
-            "ø" : "oe",
-            "Ø" : 'oe',
-            "å" : "aa",
-            'Å': 'aa',
-            'tek070datoforsenestudfoertesupplerendeindvendigkorrosionsbeskyttelse': 'tek070datoindvendigkorrosionsbeskyttelse',
-            }
-        res = utils.multiple_replace(replace_dct, res, flags=re.IGNORECASE)
+        res = utils.multiple_replace(datafordeler_utils.replace_characters_dct, res, flags=re.IGNORECASE)
         res = json.loads(res)
         
         events = jmespath.search('[].Message.Grunddatabesked.Haendelsesbesked.Beskedkuvert.Filtreringsdata \
@@ -178,8 +163,8 @@ def datafordeler_new_events(metadata: dict):
             metadata = get_metadata_for_objecttype(event['objekttype'])
             schema_path = settings.SCHEMA_PATH.absolute().as_posix() + '/' + metadata["schema_name"]
             schema = datafordeler_utils.parse_datafordeler_schema(schema_path)
-            df = get_object(id=event['id'], metadata=metadata, schema=schema)
-            df = translate_codes(df)
+            df = get_object(mysql_engine, id=event['id'], metadata=metadata, schema=schema)
+            #df = datafordeler_utils.translate_codes(df)
             if 'Create' in event['beskedtype']:
                 df.to_sql(
                     name=metadata["name"], con=mysql_engine,
@@ -205,7 +190,7 @@ def datafordeler_new_events(metadata: dict):
         if params["page"] > 100:
             break
 
-def get_object(id: str, metadata: dict, schema=dict):
+def get_object(mysql_engine, id: str, metadata: dict, schema=dict):
     base_url = settings.DATAFORDELER_BASE_URL
     url = base_url + metadata['objekttype'].lower()
     params = {
@@ -218,6 +203,8 @@ def get_object(id: str, metadata: dict, schema=dict):
     res = [dict((k.lower(), v) for k, v in d.items()) for d in res]
     #dtypes = get_dtypes_dct(schema_dct=schema, columns=metadata['columns'])
     df = pd.DataFrame(res, columns=metadata['columns'])
+    df = datafordeler_utils.correct_df_according_to_datatype_limits(mysql_engine, df, settings.DB_SCHEMA, metadata["name"])
+    df = datafordeler_utils.other_ridiculous_value_exceptions(df)
     df = df.convert_dtypes()
     df[metadata["datetime_columns"]] = to_datetime_format(df[metadata["datetime_columns"]], format=metadata['datetime_format'])
     return df
@@ -265,17 +252,19 @@ def main():
     metadata_filelst = glob.glob(settings.METADATA_PATH.absolute().as_posix() + '/*.json')
     mysql_engine = sql_utils.create_engine(settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'], db_type='mysql')
     
+    #datafordeler_utils.create_codelist_dims(mysql_engine, settings.DB_SCHEMA)
+
     for metadata_file in metadata_filelst:
         metadata = utils.read_json(metadata_file)
         if not sql_utils.table_exists(mysql_engine, settings.DB_SCHEMA, metadata["name"]):
             """Ingest a brand new table into database"""
-            datafordeler_initial_parser(metadata, metadata_file)
+            asyncio.run(datafordeler_initial_parser(metadata, metadata_file))
         else:
             pass
         """Ingest new events into database"""
-        datafordeler_new_events(metadata)
-
-
+        #datafordeler_new_events(metadata)
 
 if __name__ == '__main__':
     main()
+
+# https://stackoverflow.com/questions/29571671/basic-multiprocessing-with-while-loop

@@ -85,3 +85,10 @@ def multiple_replace(replace_dct: dict, text: str, **kwargs):
 
   # For each match, look-up corresponding value in dictionary
   return regex.sub(lambda mo: replace_dct[mo.string[mo.start():mo.end()]], text)
+
+def mark_list_duplicates(lst: list):
+    return [True if lst.count(col)>1 else False for col in lst]
+
+
+# keeping this not because we need it but because of inspo
+#lookup_cols = [short_cols_db[i] + short_cols[i] + short_cols[:i].count(short_cols[i]) if duplicates[i] else short_cols[i] for i in range(len(short_cols))]
