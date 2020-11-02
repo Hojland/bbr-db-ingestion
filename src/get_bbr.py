@@ -26,8 +26,8 @@ import settings
 
 def get_count(url: str):
     params = {
-        'username': settings.DATAFORDLER_API_USR,
-        'password': settings.DATAFORDLER_API_PSW,
+        'username': settings.DATAFORDELER_API_USR,
+        'password': settings.DATAFORDELER_API_PSW,
         'count': True
     }
     res = requests.get(url, params=params).json()
@@ -82,8 +82,8 @@ async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     count = get_count(url)
     pages_count = math.ceil(count/settings.DATAFORDLER_API_PAGESIZE)
     params = {
-        'username': settings.DATAFORDLER_API_USR,
-        'password': settings.DATAFORDLER_API_PSW,
+        'username': settings.DATAFORDELER_API_USR,
+        'password': settings.DATAFORDELER_API_PSW,
         'page': 0,
         'pagesize': settings.DATAFORDLER_API_PAGESIZE,
         'status': '|'.join(settings.DATAFORDELER_ACCEPTED_STATUSCODES),
@@ -121,8 +121,8 @@ def datafordeler_new_events(metadata: dict):
     latest_date = sql_utils.get_latest_date_in_table(mysql_engine, settings.DB_SCHEMA + '.' + metadata['name'], date_col='registreringfra')
     base_url = settings.DATAFORDELER_EVENTS_BASE_URL
     params = {
-        'username': settings.DATAFORDLER_API_USR,
-        'password': settings.DATAFORDLER_API_PSW,
+        'username': settings.DATAFORDELER_API_USR,
+        'password': settings.DATAFORDELER_API_PSW,
         'page': 1,
         'pagesize': 1000,
         'datefrom': latest_date.strftime('%Y-%m-%d'), # virkningFra ??
@@ -187,8 +187,8 @@ def get_object(mysql_engine, id: str, metadata: dict, schema=dict):
     base_url = settings.DATAFORDELER_BASE_URL
     url = base_url + metadata['objekttype'].lower()
     params = {
-        'username': settings.DATAFORDLER_API_USR,
-        'password': settings.DATAFORDLER_API_PSW,
+        'username': settings.DATAFORDELER_API_USR,
+        'password': settings.DATAFORDELER_API_PSW,
         'Id': id,
     }
     res = requests.get(url, params).json()
