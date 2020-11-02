@@ -2,15 +2,19 @@ import sqlalchemy
 import re
 from collections import ChainMap
 import jmespath
+import aiomysql
+from aiohttp import ClientSession
+import asyncio
 
 from utils import datafordeler_utils, utils
 
-def create_sql_table(engine: sqlalchemy.engine, datafordeler_schema: dict, metadata: dict, schema_name: str, table_name: str):
+async def create_sql_table(mysql_engine_pool: aiomysql.pool, datafordeler_schema: dict, metadata: dict, schema_name: str, table_name: str):
     """ from schema generate postgreSQL create table query"""
-
-    def get_foreign_key_index_str(columns: list):
-        def codelist_id_int(url: str):
-            return all([re.search('\d{1,3}', k) for k, v in datafordeler_utils.get_codelist(url).items()])
+    session = ClientSession()
+    async def get_foreign_key_index_str(session: ClientSession, columns: list):
+        async def codelist_id_int(session: ClientSession, url: str):
+            codelist = await datafordeler_utils.get_codelist(session, url)
+            return all([re.search('\d{1,3}', k) for k, v in codelist.items()])
 
         codelist = datafordeler_utils.get_codelist_options()
         codelist = datafordeler_utils.codelist_exceptions(codelist)
@@ -22,7 +26,7 @@ def create_sql_table(engine: sqlalchemy.engine, datafordeler_schema: dict, metad
         lookup_cols = [short_cols_db[i] + short_cols[i] if duplicates[i] else short_cols[i] for i in range(len(short_cols))]
         new_key_translater = {columns[i]: lookup_cols[i] for i in range(len(columns))}
         foreign_key_lst = [col for col in columns if new_key_translater[col] in jmespath.search('[].option', codelist)]
-        datatype_lst = [{code['option']:'INT'} if codelist_id_int(code['url']) else {code['option']: 'VARCHAR(4)'} for code in codelist if code['option'] in lookup_cols]
+        datatype_lst = [{code['option']:'INT'} if await codelist_id_int(session, code['url']) else {code['option']: 'VARCHAR(4)'} for code in codelist if code['option'] in lookup_cols]
         datatype_dct = dict(ChainMap(*datatype_lst))
         
         foreign_key_datatypes = {foreign_key: datatype_dct[new_key_translater[foreign_key]] for foreign_key in foreign_key_lst}
@@ -66,13 +70,14 @@ def create_sql_table(engine: sqlalchemy.engine, datafordeler_schema: dict, metad
         return col_definition_str
 
      
-    foreign_str, index_str, foreign_key_datatypes = get_foreign_key_index_str(metadata['columns'])
+    foreign_str, index_str, foreign_key_datatypes = await get_foreign_key_index_str(session, metadata['columns'])
     col_definition_str = get_column_definition_str(datafordeler_schema, metadata['columns'], foreign_key_datatypes)
     
     create_table_query = f"""CREATE TABLE IF NOT EXISTS {schema_name}.{table_name} ({col_definition_str}, {index_str}, {foreign_str});"""
 
-    with engine.connect() as con:
-        con.execute(create_table_query)
+    conn = await mysql_engine_pool.acquire()
+    cur = await conn.cursor()
+    await cur.execute(create_table_query)
 
 def sql_table_col_names(engine: sqlalchemy.engine, schema_name: str, table_name: str):
     column_names = []
@@ -81,13 +86,21 @@ def sql_table_col_names(engine: sqlalchemy.engine, schema_name: str, table_name:
         column_names = [row[0] for row in rows]
     return column_names
 
-def create_codelist_dim_table(engine: sqlalchemy.engine, schema_name: str, option: str, dim_table: dict):
+async def create_codelist_dim_table(mysql_engine_pool: aiomysql.Pool, schema_name: str, option: str, dim_table: dict):
     is_int = all([re.search('\d{1,3}', k) for k, v in dim_table.items()])
     datatype = 'INT' if is_int else 'VARCHAR(4)'
     create_definition = f"""{option}_id {datatype} NOT NULL, text VARCHAR(350), PRIMARY KEY({option}_id)"""
     sql_query = f"""CREATE TABLE IF NOT EXISTS {schema_name}.{option}_dim ({create_definition})"""
-    engine.execute(sql_query)
+    
+    conn = await mysql_engine_pool.acquire()
+    cur = await conn.cursor()
+    await cur.execute(sql_query)
+    
     col_list_str = ','.join([f'{option}_id', 'text'])
     row_values_str = ','.join([f"('{k}', '{v}')" for k,v in dim_table.items()])
     sql_query = f"""REPLACE INTO {schema_name}.{option}_dim ({col_list_str}) VALUES {row_values_str}"""
-    engine.execute(sql_query)
+    
+    await cur.execute(sql_query)
+
+    await cur.close()
+    await mysql_engine_pool.release(conn)

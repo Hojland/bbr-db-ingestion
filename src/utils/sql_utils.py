@@ -7,11 +7,13 @@ from sqlalchemy.types import String, Integer, Numeric
 from os.path import exists, join, abspath
 import logging
 import re
+import aiomysql
+import asyncio
 
 from utils import utils
 
 
-def create_engine(db_config: dict, db_name: str=None, db_type: str='postgres'):
+def create_engine(db_config: dict, db_name: str=None, db_type: str='postgres', **kwargs):
     """Creates a sqlalchemy engine, with specified connection information
 
     Arguments
@@ -19,6 +21,7 @@ def create_engine(db_config: dict, db_name: str=None, db_type: str='postgres'):
     db_config: a dictionary with configurations for a resource
     db_name: Overwrite the database from the config
     db_type: a string with the database type for prepending the connection string
+    kwargs: parameters to pass onto create engine
 
     Returns
     -------
@@ -42,9 +45,35 @@ def create_engine(db_config: dict, db_name: str=None, db_type: str='postgres'):
     elif db_type == 'mysql':
         conn_string = conn_string + '?charset=utf8'
 
-    engine = sqlalchemy.create_engine(conn_string)
+    engine = sqlalchemy.create_engine(conn_string, **kwargs)
     return engine
 
+async def async_mysql_create_engine(loop, db_config: dict, db_name: str=None):
+    uid, psw, host, port, db = db_config.values()
+    if db_name:
+       db = db_name
+    pool = await aiomysql.create_pool(user=uid,
+                                      db=db,
+                                      host=host,
+                                      port=port,
+                                      password=psw,
+                                      loop=loop,
+                                      autocommit=True)
+    return pool
+
+async def df_to_sql(mysql_engine_pool: aiomysql.Pool, df: pd.DataFrame, table_name: str, chunksize: int=500):
+    df = df.astype(str)
+    sql_query_start = f'INSERT INTO {table_name}'
+    column_str = ','.join(list(df))
+    values_str = ','.join([f'''('{"','".join(values)}')''' for values in df.values])
+    values_str = utils.multiple_replace({"'nan'": 'NULL', "'<NA>'": 'NULL'}, values_str)
+
+    sql_query = f"{sql_query_start} ({column_str}) VALUES {values_str}"
+    conn = await mysql_engine_pool.acquire()
+    cur = await conn.cursor()
+    await cur.execute(sql_query)
+    await cur.close()
+    await mysql_engine_pool.release(conn)
 
 def get_latest_date_in_table(db_engine: sqlalchemy.engine, table_name: str, date_col: str='date'):
     latest_date = db_engine.execute(f'SELECT MAX({date_col}) FROM {table_name}').scalar()
@@ -155,8 +184,13 @@ def table_index_exists(db_engine: sqlalchemy.engine, schema: str, table: str, in
         index_exists = False
     return index_exists
 
-def col_dtypes(db_engine: sqlalchemy.engine, schema_name: str, table_name: str):
-    res = db_engine.execute(f"SELECT column_name, data_type FROM information_schema.columns where table_schema = '{schema_name}' and table_name='{table_name}'")
+async def col_dtypes(mysql_engine_pool: aiomysql.pool, schema_name: str, table_name: str):
+    conn = await mysql_engine_pool.acquire()
+    cur = await conn.cursor()
+    await cur.execute(f"SELECT column_name, data_type FROM information_schema.columns where table_schema = '{schema_name}' and table_name='{table_name}'")
+    res = await cur.fetchall()
+    await cur.close()
+    await mysql_engine_pool.release(conn)
     col_dtypes = {column_name: data_type for column_name, data_type in res}
     return col_dtypes
 

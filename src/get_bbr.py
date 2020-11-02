@@ -42,13 +42,7 @@ async def request_json(session: ClientSession, url: str, params: dict):
     res = [dict((k.lower(), v) for k, v in d.items()) for d in res]
     return res
 
-async def to_sql_async(engine, df: pd.DataFrame, table_name: str):
-    df.to_sql(
-        name=table_name, con=engine,
-        index=False, schema=settings.DB_SCHEMA,
-        if_exists='append')
-
-async def request_and_ingest(mysql_engine, session: ClientSession, params: dict, url: str, metadata: dict, queue):
+async def request_and_ingest(mysql_engine_pool, session: ClientSession, params: dict, url: str, metadata: dict, queue):
     sleeptime  = queue.get_nowait()
     logging.info(f"Trying to sleep {sleeptime} for my little task")
     await asyncio.sleep(sleeptime)
@@ -59,27 +53,28 @@ async def request_and_ingest(mysql_engine, session: ClientSession, params: dict,
     if not res:
         return scroll
     df = pd.DataFrame(res, columns=metadata["columns"])
-    df = datafordeler_utils.correct_df_according_to_datatype_limits(mysql_engine, df, settings.DB_SCHEMA, metadata["name"])
+    df = await datafordeler_utils.correct_df_according_to_datatype_limits(mysql_engine_pool, df, settings.DB_SCHEMA, metadata["name"])
     df = datafordeler_utils.other_ridiculous_value_exceptions(df)
     df = df.convert_dtypes()
     df[metadata["datetime_columns"]] = to_datetime_format(df[metadata["datetime_columns"]], format=metadata['datetime_format'])
-    #df = translate_codes(df)
     logging.info(f"awaiting sending to database for page: {params['page']}")
-    await to_sql_async(mysql_engine, df, metadata["name"])
+    await sql_utils.df_to_sql(mysql_engine_pool, df, f'{settings.DB_SCHEMA}.{metadata["name"]}')
     logging.info(f"I have just put some data into {metadata['name']}")
     queue.task_done()
     return scroll
 
 async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     schema_path = settings.SCHEMA_PATH.absolute().as_posix() + '/' + metadata["schema_name"]
-    
     schema = datafordeler_utils.parse_datafordeler_schema(schema_path)
-    mysql_engine = sql_utils.create_engine(settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'], db_type='mysql')
+
     metadata["columns"] = list(schema.keys())
     metadata["datetime_columns"] = [k for k,v in schema.items() if "date-time" in v]
     utils.write_json(metadata, metadata_file)
 
-    sql.create_sql_table(mysql_engine, schema, metadata, settings.DB_SCHEMA, metadata['name'])
+    loop = asyncio.get_event_loop()
+    mysql_engine_pool = await sql_utils.async_mysql_create_engine(loop=loop, db_config=settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'])
+    
+    await sql.create_sql_table(mysql_engine_pool, schema, metadata, settings.DB_SCHEMA, metadata['name'])
 
     base_url = settings.DATAFORDELER_BASE_URL
     url = base_url + metadata['objekttype'].lower()
@@ -103,13 +98,11 @@ async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
         
         logging.info(f'Trying to setup queue with {settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize()} sleeptime')
         queue.put_nowait(settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize())
-        logging.info(f"params: {params}")
-        task = asyncio.create_task(request_and_ingest(mysql_engine, session, params.copy(), url, metadata, queue)) # scroll implemented as failure proofing
+        task = asyncio.create_task(request_and_ingest(mysql_engine_pool, session, params.copy(), url, metadata, queue)) # scroll implemented as failure proofing
         tasks.append(task)
 
-        if queue.qsize() > 5:
+        if queue.qsize() > 10:
             logging.info(f'Waiting {queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME} seconds to add to the queue')
-            logging.info(tasks)
             # await asyncio.gather(*tasks, return_exceptions=True)
             logging.info(f'Are we here?')
             await queue.join()
@@ -251,9 +244,8 @@ def main():
     # Load in source meta data
     metadata_filelst = glob.glob(settings.METADATA_PATH.absolute().as_posix() + '/*.json')
     mysql_engine = sql_utils.create_engine(settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'], db_type='mysql')
-    
-    #datafordeler_utils.create_codelist_dims(mysql_engine, settings.DB_SCHEMA)
 
+    asyncio.run(datafordeler_utils.create_codelist_dims(settings.DB_SCHEMA))
     for metadata_file in metadata_filelst:
         metadata = utils.read_json(metadata_file)
         if not sql_utils.table_exists(mysql_engine, settings.DB_SCHEMA, metadata["name"]):
@@ -268,3 +260,8 @@ if __name__ == '__main__':
     main()
 
 # https://stackoverflow.com/questions/29571671/basic-multiprocessing-with-while-loop
+
+# TODO
+# events should be async as well (remove requests and mysqlclient)
+# events should be sent in lists of the same type, then grouped and then ingested
+# put the whole shebang into production

@@ -7,3 +7,4 @@ tqdm
 jmespath
 beautifulsoup4
 aiohttp
+aiomysql

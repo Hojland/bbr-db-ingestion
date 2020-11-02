@@ -9,6 +9,10 @@ import jmespath
 import re
 import requests
 from bs4 import BeautifulSoup
+import aiohttp
+from aiohttp import ClientSession
+import aiomysql
+import asyncio
 
 from utils import sql, utils, sql_utils
 import settings
@@ -93,8 +97,9 @@ def get_codelist_options():
     return codelist_options
 
 @functools.lru_cache
-def get_codelist(url: str):
-    res = requests.get(url).content
+async def get_codelist(session: ClientSession, url: str):
+    res = await session.get(url)
+    res = await res.text()
     soup = BeautifulSoup(res, features="html.parser")
     codelist = {}
     for code in soup.select('.kodeliste-list li'):
@@ -117,14 +122,30 @@ def codelist_exceptions(codelist_options: list):
     codelist_options = json.loads(codelist_txt)
     return codelist_options
 
-def create_codelist_dims(engine: sqlalchemy.engine, schema_name: str):
+async def create_codelist_dims(schema_name: str):
+    queue = asyncio.Queue()
+    
+    async def get_and_create_codelist(session: ClientSession, mysql_engine_pool, code: dict, queue: asyncio.Queue):
+        sleeptime  = queue.get_nowait()
+        await asyncio.sleep(sleeptime)
+        dim_table = await get_codelist(session, code['url'])
+        await sql.create_codelist_dim_table(mysql_engine_pool, settings.DB_SCHEMA, code['option'], dim_table)
+        queue.task_done()
+    session = ClientSession()
+    loop = asyncio.get_event_loop()
+    mysql_engine_pool = await sql_utils.async_mysql_create_engine(loop=loop, db_config=settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'])
     codelist = get_codelist_options()
     codelist = codelist_exceptions(codelist)
+    tasks = []
     for code in codelist:
-        dim_table = get_codelist(code['url'])
-        sql.create_codelist_dim_table(engine, settings.DB_SCHEMA, code['option'], dim_table)
+        queue.put_nowait(1 * queue.qsize())
+        task = asyncio.create_task(get_and_create_codelist(session, mysql_engine_pool, code, queue))
+        tasks.append(task)
+        await queue.join()
+        
 
-def translate_codes(df: pd.DataFrame):
+
+async def translate_codes(session: ClientSession, df: pd.DataFrame):
     codelist_options = get_codelist_options()
     codelist_options = codelist_exceptions(codelist_options)
     col_parts = [option['option'] for option in codelist_options]
@@ -133,12 +154,12 @@ def translate_codes(df: pd.DataFrame):
     for col in col_parts:
         if col in short_df_col:
             url = jmespath.search(f"[?option=='{col}'].url | [0]", codelist_options)
-            codelist_translater = get_codelist(url)
+            codelist_translater = await get_codelist(session, url)
             df[col_translate[col]] = df[col_translate[col]].replace(codelist_translater)
     return df
 
-def correct_df_according_to_datatype_limits(engine: sqlalchemy.engine, df: pd.DataFrame, schema_name: str, table_name: str):
-    col_dtypes = sql_utils.col_dtypes(engine, schema_name, table_name)
+async def correct_df_according_to_datatype_limits(mysql_engine_pool: aiomysql.Pool, df: pd.DataFrame, schema_name: str, table_name: str):
+    col_dtypes = await sql_utils.col_dtypes(mysql_engine_pool, schema_name, table_name)
     for col, dtype in col_dtypes.items():
         if dtype == 'int' and col!='id':
             if df[col].dtype=='object':
