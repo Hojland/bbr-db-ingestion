@@ -9,13 +9,13 @@ MARIADB_CONFIG = {
     "db": "bbr",
 }
 
-POSTGRESDB_CONFIG = {
-    "user": os.environ["POSTGRES_USR"],
-    "psw": os.environ["POSTGRES_PSW"],
-    "host": "localhost",
-    "port": 5432,
-    "db": "dev-db",
-}
+#POSTGRESDB_CONFIG = {
+#    "user": os.environ["POSTGRES_USR"],
+#    "psw": os.environ["POSTGRES_PSW"],
+#    "host": "localhost",
+#    "port": 5432,
+#    "db": "dev-db",
+#}
 
 DATAFORDELER_BASE_URL = 'https://services.datafordeler.dk//BBR/BBRPublic/1/REST/'
 DATAFORDELER_EVENTS_BASE_URL = 'https://services.datafordeler.dk/system/EventMessages/1.0.0/custom?'

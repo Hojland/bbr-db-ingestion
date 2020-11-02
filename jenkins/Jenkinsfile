@@ -1,5 +1,5 @@
 pipeline {
-    agent {label 'docker-slave-r5.xlarge'}
+    agent {label 'docker-slave-r5.2xlarge'}
     stages {
         stage('Build image') {
             steps {
