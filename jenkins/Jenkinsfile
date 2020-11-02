@@ -19,7 +19,7 @@ pipeline {
                 script {
                     withCredentials([
                         usernamePassword(credentialsId: 'nuuday-ai-prod-mysql', usernameVariable: 'MARIADB_USR', passwordVariable: 'MARIADB_PSW'),
-                        usernamePassword(credentialsId: 'DATAFORDELER_API', usernameVariable: 'DATAFORDELER_API_USR', passwordVariable: 'DATAFORDELER_API_PSW')
+                        usernamePassword(credentialsId: 'datafordeler_api', usernameVariable: 'DATAFORDELER_API_USR', passwordVariable: 'DATAFORDELER_API_PSW')
                     ]) {
                             sh "docker run -t --rm -e 'MARIADB_USR=${MARIADB_USR}' -e 'MARIADB_PSW=${MARIADB_PSW}' -e 'DATAFORDELER_API_USR=${DATAFORDELER_API_USR}' -e 'DATAFORDELER_API_PSW=${DATAFORDELER_API_PSW}' \
                                 '${JOB_NAME}':'${BUILD_ID}'"

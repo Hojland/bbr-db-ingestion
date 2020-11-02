@@ -19,8 +19,8 @@ MARIADB_CONFIG = {
 
 DATAFORDELER_BASE_URL = 'https://services.datafordeler.dk//BBR/BBRPublic/1/REST/'
 DATAFORDELER_EVENTS_BASE_URL = 'https://services.datafordeler.dk/system/EventMessages/1.0.0/custom?'
-DATAFORDLER_API_USR = os.environ["DATAFORDLER_API_USR"]
-DATAFORDLER_API_PSW = os.environ["DATAFORDLER_API_PSW"]
+DATAFORDELER_API_USR = os.environ["DATAFORDELER_API_USR"]
+DATAFORDELER_API_PSW = os.environ["DATAFORDELER_API_PSW"]
 DATAFORDELER_API_SLEEP_TIME = 2
 DATAFORDELER_ACCEPTED_STATUSCODES = ['6', '7','8', '9', '10', '11']
 DATAFORDELER_CODELIST_URL = 'https://teknik.bbr.dk/kodelister/0/1/0/'
