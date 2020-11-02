@@ -92,7 +92,7 @@ async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     queue = asyncio.Queue()
     tasks = []
     session = ClientSession()
-    while params["page"] < 33: #pages_count
+    while params["page"] < pages_count:
         params["page"] += 1
         logging.info(f'Page {params["page"]} of {pages_count} getting a total of {count} rows. {str(utils.time_now() - start_time).split(".")[0]} has passed')
         
