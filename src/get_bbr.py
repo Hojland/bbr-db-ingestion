@@ -265,7 +265,7 @@ def main():
     for metadata_file in metadata_filelst:
         metadata = utils.read_json(metadata_file)
         table_exists_empty = asyncio.run(sql_utils.table_exists_empty(settings.DB_SCHEMA, metadata["name"]))
-        if not table_exists_empty:
+        if table_exists_empty:
             """Ingest a brand new table into database"""
             asyncio.run(datafordeler_initial_parser(metadata, metadata_file))
             pass
