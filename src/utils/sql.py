@@ -5,6 +5,7 @@ import jmespath
 import aiomysql
 from aiohttp import ClientSession
 import asyncio
+import logging 
 
 from utils import datafordeler_utils, utils
 
@@ -16,7 +17,7 @@ async def create_sql_table(mysql_engine_pool: aiomysql.pool, datafordeler_schema
             codelist = await datafordeler_utils.get_codelist(session, url)
             return all([re.search('\d{1,3}', k) for k, v in codelist.items()])
 
-        codelist = datafordeler_utils.get_codelist_options(session)
+        codelist = await datafordeler_utils.get_codelist_options(session)
         codelist = datafordeler_utils.codelist_exceptions(codelist)
 
         no_preprend_cols = [col.split('_')[len(col.split('_'))-1] if not col.split('_')[0]=='id' else col for col in columns]

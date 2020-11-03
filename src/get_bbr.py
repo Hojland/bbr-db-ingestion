@@ -28,7 +28,7 @@ async def get_count(session: ClientSession, url: str):
     params = {
         'username': settings.DATAFORDELER_API_USR,
         'password': settings.DATAFORDELER_API_PSW,
-        'count': True
+        'count': 'True'
     }
     res = await session.get(url, params=params)
     res = await res.json()
@@ -260,7 +260,7 @@ def main():
     # Load in source meta data
     metadata_filelst = glob.glob(settings.METADATA_PATH.absolute().as_posix() + '/*.json')
 
-    asyncio.run(datafordeler_utils.create_codelist_dims(settings.DB_SCHEMA))
+    # asyncio.run(datafordeler_utils.create_codelist_dims(settings.DB_SCHEMA))
 
     for metadata_file in metadata_filelst:
         metadata = utils.read_json(metadata_file)
