@@ -80,12 +80,12 @@ async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     url = base_url + metadata['objekttype'].lower()
 
     count = get_count(url)
-    pages_count = math.ceil(count/settings.DATAFORDLER_API_PAGESIZE)
+    pages_count = math.ceil(count/settings.DATAFORDELER_API_PAGESIZE)
     params = {
         'username': settings.DATAFORDELER_API_USR,
         'password': settings.DATAFORDELER_API_PSW,
         'page': 0,
-        'pagesize': settings.DATAFORDLER_API_PAGESIZE,
+        'pagesize': settings.DATAFORDELER_API_PAGESIZE,
         'status': '|'.join(settings.DATAFORDELER_ACCEPTED_STATUSCODES),
     }
     start_time = utils.time_now()
