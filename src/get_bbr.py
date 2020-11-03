@@ -267,7 +267,7 @@ def main():
         table_exists_empty = asyncio.run(sql_utils.table_exists_empty(settings.DB_SCHEMA, metadata["name"]))
         if not table_exists_empty:
             """Ingest a brand new table into database"""
-            #asyncio.run(datafordeler_initial_parser(metadata, metadata_file))
+            asyncio.run(datafordeler_initial_parser(metadata, metadata_file))
             pass
         else:
             pass
