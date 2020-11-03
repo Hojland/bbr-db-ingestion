@@ -63,11 +63,19 @@ async def async_mysql_create_engine(loop, db_config: dict, db_name: str=None):
                                       autocommit=True)
     return pool
 
-async def df_to_sql(mysql_engine_pool: aiomysql.Pool, df: pd.DataFrame, table_name: str, chunksize: int=500):
+async def df_to_sql_split(mysql_engine_pool: aiomysql.Pool, df: pd.DataFrame, table_name: str, chunksize: int=50):
+    for i in range(0, len(df), chunksize):
+        await df_to_sql(mysql_engine_pool, df.iloc[i:i+chunksize],table_name)
+
+async def df_to_sql(mysql_engine_pool: aiomysql.Pool, df: pd.DataFrame, table_name: str):
+    def delete_quotation(str: str):
+        return str.replace("'","").replace('"','')
+
     df = df.astype(str)
+    df_values = [[delete_quotation(value) for value in values] for values in df.values]
     sql_query_start = f'INSERT INTO {table_name}'
     column_str = ','.join(list(df))
-    values_str = ','.join([f'''('{"','".join(values)}')''' for values in df.values])
+    values_str = ','.join([f'''('{"','".join(values)}')''' for values in df_values])
     values_str = utils.multiple_replace({"'nan'": 'NULL', "'<NA>'": 'NULL'}, values_str)
 
     sql_query = f"{sql_query_start} ({column_str}) VALUES {values_str}"

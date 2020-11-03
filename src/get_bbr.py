@@ -60,7 +60,7 @@ async def request_and_ingest(mysql_engine_pool, session: ClientSession, params: 
     df = df.convert_dtypes()
     df[metadata["datetime_columns"]] = to_datetime_format(df[metadata["datetime_columns"]], format=metadata['datetime_format'])
     logging.info(f"awaiting sending to database for page: {params['page']}")
-    await sql_utils.df_to_sql(mysql_engine_pool, df, f'{settings.DB_SCHEMA}.{metadata["name"]}')
+    await sql_utils.df_to_sql_split(mysql_engine_pool, df, f'{settings.DB_SCHEMA}.{metadata["name"]}')
     logging.info(f"I have just put some data into {metadata['name']}")
     queue.task_done()
     return scroll
@@ -267,7 +267,8 @@ def main():
         table_exists_empty = asyncio.run(sql_utils.table_exists_empty(settings.DB_SCHEMA, metadata["name"]))
         if not table_exists_empty:
             """Ingest a brand new table into database"""
-            asyncio.run(datafordeler_initial_parser(metadata, metadata_file))
+            #asyncio.run(datafordeler_initial_parser(metadata, metadata_file))
+            pass
         else:
             pass
         """Ingest new events into database"""
