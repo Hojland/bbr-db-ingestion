@@ -89,6 +89,8 @@ def multiple_replace(replace_dct: dict, text: str, **kwargs):
 def mark_list_duplicates(lst: list):
     return [True if lst.count(col)>1 else False for col in lst]
 
+def split_list(lst: list, chunk_size: int):
+    return [lst[offs:offs+chunk_size] for offs in range(0, len(lst), chunk_size)]
 
 # keeping this not because we need it but because of inspo
 #lookup_cols = [short_cols_db[i] + short_cols[i] + short_cols[:i].count(short_cols[i]) if duplicates[i] else short_cols[i] for i in range(len(short_cols))]

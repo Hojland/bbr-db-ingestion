@@ -7,7 +7,6 @@ import pandas as pd
 import functools
 import jmespath
 import re
-import requests
 from bs4 import BeautifulSoup
 import aiohttp
 from aiohttp import ClientSession
@@ -85,8 +84,9 @@ def dict_flattener(d: str):
     return cleaned_dicts
 
 @functools.lru_cache
-def get_codelist_options():
-    res = requests.get(settings.DATAFORDELER_CODELIST_URL).content
+async def get_codelist_options(session: ClientSession):
+    res = await session.get(settings.DATAFORDELER_CODELIST_URL)
+    res = await res.text()
     soup = BeautifulSoup(res, features="html.parser")
     codelist_options = []
     for option in soup.select('option')[1:]:
@@ -134,7 +134,7 @@ async def create_codelist_dims(schema_name: str):
     session = ClientSession()
     loop = asyncio.get_event_loop()
     mysql_engine_pool = await sql_utils.async_mysql_create_engine(loop=loop, db_config=settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'])
-    codelist = get_codelist_options()
+    codelist = await get_codelist_options(session)
     codelist = codelist_exceptions(codelist)
     tasks = []
     for code in codelist:
@@ -146,7 +146,7 @@ async def create_codelist_dims(schema_name: str):
 
 
 async def translate_codes(session: ClientSession, df: pd.DataFrame):
-    codelist_options = get_codelist_options()
+    codelist_options = await get_codelist_options(session)
     codelist_options = codelist_exceptions(codelist_options)
     col_parts = [option['option'] for option in codelist_options]
     short_df_col = [re.search('(?<=\d{3})(.*)', col).group(0) if re.search('\d{3}', col) else col for col in list(df)]

@@ -4,6 +4,7 @@ import os
 from tqdm import tqdm
 import sys
 from sqlalchemy.types import String, Integer, Numeric
+from typing import List, Dict
 from os.path import exists, join, abspath
 import logging
 import re
@@ -11,6 +12,7 @@ import aiomysql
 import asyncio
 
 from utils import utils
+import settings
 
 
 def create_engine(db_config: dict, db_name: str=None, db_type: str='postgres', **kwargs):
@@ -75,8 +77,16 @@ async def df_to_sql(mysql_engine_pool: aiomysql.Pool, df: pd.DataFrame, table_na
     await cur.close()
     await mysql_engine_pool.release(conn)
 
-def get_latest_date_in_table(db_engine: sqlalchemy.engine, table_name: str, date_col: str='date'):
-    latest_date = db_engine.execute(f'SELECT MAX({date_col}) FROM {table_name}').scalar()
+async def get_latest_date_in_table(mysql_engine_pool: aiomysql.Pool, table_name: str, date_col: str='date'):
+    sql_query = f'SELECT MAX({date_col}) FROM {table_name}'
+    conn = await mysql_engine_pool.acquire()
+    cur = await conn.cursor()
+    await cur.execute(sql_query)
+    (latest_date, ) = await cur.fetchone()
+
+    await cur.close()
+    await mysql_engine_pool.release(conn)
+
     if not latest_date:
         raise IndexError(f"No data in variable '{date_col}' in table")
     return latest_date
@@ -95,20 +105,43 @@ def delete_table(db_engine: sqlalchemy.engine, table: str):
 def truncate_table(db_engine: sqlalchemy.engine, table: str):
     db_engine.execute(f'TRUNCATE TABLE {table}')
 
-def table_exists(db_engine: sqlalchemy.engine, schema_name: str, table_name: str):
-    exists_num = db_engine.execute(f'''
+async def table_exists(mysql_engine_pool: aiomysql.pool, schema_name: str, table_name: str):
+    sql_query = f'''
     SELECT EXISTS (SELECT * 
         FROM INFORMATION_SCHEMA.TABLES 
         WHERE TABLE_SCHEMA = '{schema_name}' 
         AND  TABLE_NAME = '{table_name}')
-    ''').scalar()
+    '''
+
+    conn = await mysql_engine_pool.acquire()
+    cur = await conn.cursor()
+    await cur.execute(sql_query)
+    (exists_num, ) = await cur.fetchone()
+
+    await cur.close()
+    await mysql_engine_pool.release(conn)
     if exists_num == 0:
         exists = False
     elif exists_num == 1:
         exists = True
     return exists
 
-def update_table(db_engine: sqlalchemy.engine, table_name: str, update_dct: dict, index_dct: dict):
+async def several_updates_table(mysql_engine_pool: aiomysql.Pool, table_name: str, update_df: pd.DataFrame, index_df: pd.DataFrame):
+    assert len(index_df) == len(update_df), 'index_df and update_df is not the same length'
+    for i in range(len(index_df)):
+        try: 
+            update_dct = update_df.iloc[i].to_dict()
+        except AttributeError: 
+            update_dct = {update_df.name: update_df.iloc[i]}
+
+        try: 
+            index_dct = index_df.iloc[i].to_dict()
+        except AttributeError: 
+            index_dct = {index_df.name: index_df.iloc[i]}
+
+        await update_table(mysql_engine_pool, table_name, update_dct, index_dct)
+
+async def update_table(mysql_engine_pool: aiomysql.Pool, table_name: str, update_dct: dict, index_dct: dict):
     update_string = ', '.join(f"{key}='{value}'" for key, value in update_dct.items())
     replace_dct = {
         "'nat'": 'NULL',
@@ -117,7 +150,11 @@ def update_table(db_engine: sqlalchemy.engine, table_name: str, update_dct: dict
     update_string = utils.multiple_replace(replace_dct, update_string, flags=re.IGNORECASE)
     index_string = ' AND '.join(f"{key}='{value}'" for key, value in index_dct.items())
     sql_query = f'UPDATE {table_name} SET {update_string} WHERE {index_string}'
-    db_engine.execute(sql_query)
+    conn = await mysql_engine_pool.acquire()
+    cur = await conn.cursor()
+    await cur.execute(sql_query)
+    await cur.close()
+    await mysql_engine_pool.release(conn)
 
 def view_exists(db_engine: sqlalchemy.engine, schema: str, view: str, sql_lang: str='mysql'):
     base_sql_query = f'''EXISTS (SELECT * 
@@ -145,27 +182,35 @@ def view_exists(db_engine: sqlalchemy.engine, schema: str, view: str, sql_lang: 
         exists = True
     return exists
 
-def table_empty(db_engine: sqlalchemy.engine, table: str):
-   empty_num = db_engine.execute(f'''
-      SELECT EXISTS(SELECT 1 FROM {table})
-   ''').scalar()
-   if empty_num == 0:
-      empty = False
-   elif empty_num == 1:
-      empty = True
-   return empty
+async def table_empty(mysql_engine_pool: aiomysql.pool, table_name: str):
+    sql_query = f'SELECT EXISTS(SELECT 1 FROM {table_name})'
+    conn = await mysql_engine_pool.acquire()
+    cur = await conn.cursor()
+    await cur.execute(sql_query)
+    (empty_num, ) = await cur.fetchone()
 
-def table_exists_empty(db_engine: sqlalchemy.engine, schema: str, table: str):
-   exists = table_exists(db_engine, schema, table)
-   if exists:
-      empty = table_empty(db_engine, schema + '.' + table)
-      if empty:
-         both = True
-      else:
-         both = False
-   else:
-      both = False
-   return both
+    await cur.close()
+    await mysql_engine_pool.release(conn)
+    if empty_num == 0:
+        empty = False
+    elif empty_num == 1:
+        empty = True
+    return empty
+
+async def table_exists_empty(schema: str, table: str):
+    loop = asyncio.get_event_loop()
+    mysql_engine_pool = await async_mysql_create_engine(loop=loop, db_config=settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'])
+    
+    exists = await table_exists(mysql_engine_pool, schema, table)
+    if exists:
+        empty = await table_empty(mysql_engine_pool, schema + '.' + table)
+        if empty:
+            both = True
+        else:
+            both = False
+    else:
+        both = False
+    return both
 
 def table_index_exists(db_engine: sqlalchemy.engine, schema: str, table: str, index_name: str=None):
     sql_query = f'''
