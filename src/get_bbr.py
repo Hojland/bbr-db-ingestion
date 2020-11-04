@@ -281,11 +281,9 @@ def main():
         if table_exists_empty:
             """Ingest a brand new table into database"""
             asyncio.run(datafordeler_initial_parser(metadata, metadata_file))
-            pass
-        else:
-            pass
-        """Ingest new events into database"""
-        asyncio.run(datafordeler_new_events())
+
+    """Ingest new events into database"""
+    asyncio.run(datafordeler_new_events())
 
 if __name__ == '__main__':
     main()
