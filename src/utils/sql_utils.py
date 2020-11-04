@@ -205,13 +205,13 @@ async def table_empty(mysql_engine_pool: aiomysql.pool, table_name: str):
         empty = True
     return empty
 
-async def table_exists_empty(schema: str, table: str):
+async def table_exists_empty(schema: str, table_name: str):
     loop = asyncio.get_event_loop()
     mysql_engine_pool = await async_mysql_create_engine(loop=loop, db_config=settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'])
     
-    exists = await table_exists(mysql_engine_pool, schema, table)
+    exists = await table_exists(mysql_engine_pool, schema, table_name)
     if exists:
-        empty = await table_empty(mysql_engine_pool, schema + '.' + table)
+        empty = await table_empty(mysql_engine_pool, schema + '.' + table_name)
         if empty:
             both = True
         else:

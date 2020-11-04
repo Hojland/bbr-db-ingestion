@@ -79,6 +79,8 @@ async def create_sql_table(mysql_engine_pool: aiomysql.pool, datafordeler_schema
     conn = await mysql_engine_pool.acquire()
     cur = await conn.cursor()
     await cur.execute(create_table_query)
+    await cur.close()
+    await mysql_engine_pool.release(conn)
 
 def sql_table_col_names(engine: sqlalchemy.engine, schema_name: str, table_name: str):
     column_names = []
