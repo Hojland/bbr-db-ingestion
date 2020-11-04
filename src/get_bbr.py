@@ -94,7 +94,7 @@ async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     params = {
         'username': settings.DATAFORDELER_API_USR,
         'password': settings.DATAFORDELER_API_PSW,
-        'page': 925,
+        'page': 0,
         'pagesize': settings.DATAFORDELER_API_PAGESIZE,
         'status': '|'.join(settings.DATAFORDELER_ACCEPTED_STATUSCODES),
     }
