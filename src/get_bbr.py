@@ -59,6 +59,7 @@ async def request_and_ingest(mysql_engine_pool, session: ClientSession, params: 
     logging.info(f"Got my result, good!")
     scroll = True if res else False
     if not res:
+        queue.task_done()
         return scroll
     df = pd.DataFrame(res, columns=metadata["columns"])
     df = await datafordeler_utils.correct_df_according_to_datatype_limits(mysql_engine_pool, df, settings.DB_SCHEMA, metadata["name"])
@@ -93,21 +94,20 @@ async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     params = {
         'username': settings.DATAFORDELER_API_USR,
         'password': settings.DATAFORDELER_API_PSW,
-        'page': 0,
+        'page': 925,
         'pagesize': settings.DATAFORDELER_API_PAGESIZE,
         'status': '|'.join(settings.DATAFORDELER_ACCEPTED_STATUSCODES),
     }
     start_time = utils.time_now()
     queue = asyncio.Queue()
-    tasks = []
-    while params["page"] < pages_count:
+    scroll = True
+    while params["page"] < pages_count and scroll:
         params["page"] += 1
         logging.info(f'Page {params["page"]} of {pages_count} getting a total of {count} rows. {str(utils.time_now() - start_time).split(".")[0]} has passed')
         
         logging.info(f'Trying to setup queue with {settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize()} sleeptime')
         queue.put_nowait(settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize())
-        task = asyncio.create_task(request_and_ingest(mysql_engine_pool, session, params.copy(), url, metadata, queue)) # scroll implemented as failure proofing
-        tasks.append(task)
+        scroll = await request_and_ingest(mysql_engine_pool, session, params.copy(), url, metadata, queue) # scroll implemented as failure proofing
 
         if queue.qsize() > 10:
             logging.info(f'Waiting {queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME} seconds to add to the queue')
