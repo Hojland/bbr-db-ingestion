@@ -36,6 +36,7 @@ async def get_count(session: ClientSession, url: str):
 
 async def request_replace_json(session: ClientSession, url: str, params: dict):
     res = await session.get(url, params=params)
+    assert res.status == 200, f"Status for request is {res.status} with reason '{res.reason}' for page {params['page']}"
     res = await res.text()
     res = utils.multiple_replace(datafordeler_utils.replace_characters_dct, res, flags=re.IGNORECASE)
     res = json.loads(res)
@@ -46,7 +47,12 @@ async def request_and_ingest(mysql_engine_pool, session: ClientSession, params: 
     logging.info(f"Trying to sleep {sleeptime} for my little task")
     await asyncio.sleep(sleeptime)
     logging.info(f"Awake again and now requesting the suckers")
-    res = await request_replace_json(session, url, params)
+    try:
+        res = await request_replace_json(session, url, params)
+    except AssertionError as ae:
+        logging.info(f"Error in request {ae}")
+        queue.task_done()
+        return True
     res = datafordeler_utils.dict_flattener(res)
     res = [dict((k.lower(), v) for k, v in d.items()) for d in res]
 
@@ -113,6 +119,8 @@ async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
         logging.info(f'Waiting {queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME} seconds to go to next table')
         await asyncio.sleep(queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME)
 
+# https://stackoverflow.com/questions/46890646/asyncio-weirdness-of-task-exception-was-never-retrieved
+
 async def datafordeler_new_events():
     loop = asyncio.get_event_loop()
     mysql_engine_pool = await sql_utils.async_mysql_create_engine(loop=loop, db_config=settings.MARIADB_CONFIG, db_name=settings.MARIADB_CONFIG['db'])
@@ -155,7 +163,11 @@ async def datafordeler_new_events():
             for message_type, ids in message_type_id.items():
                 if not ids:
                     continue
-                df = await get_object(mysql_engine_pool, session=session, ids=ids, metadata=metadata, schema=schema)
+                try:
+                    df = await get_object(mysql_engine_pool, session=session, ids=ids, metadata=metadata, schema=schema)
+                except AssertionError as ae:
+                    logging.info(f'got http error {ae} for {objecttype} and {message_type}')
+                    break
                 if message_type == 'Create':
                     await sql_utils.df_to_sql(mysql_engine_pool, df, f'{settings.DB_SCHEMA}.{metadata["name"]}')
                 elif message_type == 'Update':
@@ -206,6 +218,7 @@ async def get_object(mysql_engine_pool: aiomysql.pool, session: ClientSession, i
             'Id': '|'.join(hundred_ids),
         }
         res = await session.get(url, params=params)
+        assert res.status == 200, f"Status for request is {res.status} with reason {res.reason}"
         res = await res.json()
         res_lst.extend(res)
     # Lower case keys
