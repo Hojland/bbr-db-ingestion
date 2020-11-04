@@ -94,26 +94,28 @@ async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
     params = {
         'username': settings.DATAFORDELER_API_USR,
         'password': settings.DATAFORDELER_API_PSW,
-        'page': 0,
+        'page': 925,
         'pagesize': settings.DATAFORDELER_API_PAGESIZE,
         'status': '|'.join(settings.DATAFORDELER_ACCEPTED_STATUSCODES),
     }
     start_time = utils.time_now()
     queue = asyncio.Queue()
     scroll = True
+    tasks = []
     while params["page"] < pages_count and scroll:
         params["page"] += 1
         logging.info(f'Page {params["page"]} of {pages_count} getting a total of {count} rows. {str(utils.time_now() - start_time).split(".")[0]} has passed')
         
         logging.info(f'Trying to setup queue with {settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize()} sleeptime')
         queue.put_nowait(settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize())
-        scroll = await request_and_ingest(mysql_engine_pool, session, params.copy(), url, metadata, queue) # scroll implemented as failure proofing
+        task = asyncio.create_task(request_and_ingest(mysql_engine_pool, session, params.copy(), url, metadata, queue)) # scroll implemented as failure proofing
+        tasks.append(task)
 
         if queue.qsize() > 10:
             logging.info(f'Waiting {queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME} seconds to add to the queue')
-            # await asyncio.gather(*tasks, return_exceptions=True)
-            await queue.join()
-            #await asyncio.sleep(queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME)
+            scrolls = await asyncio.gather(*tasks, return_exceptions=True)
+            scroll = all(scrolls)
+            tasks = []
 
     if not queue.empty():
         logging.info(f'Waiting {queue.qsize() * settings.DATAFORDELER_API_SLEEP_TIME} seconds to go to next table')
