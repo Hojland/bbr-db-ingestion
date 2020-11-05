@@ -35,7 +35,7 @@ async def get_count(session: ClientSession, url: str):
     return res['count']
 
 async def request_replace_json(session: ClientSession, url: str, params: dict):
-    res = await session.get(url, params=params)
+    res = await session.get(url, params=params, timeout=15)
     assert res.status == 200, f"Status for request is {res.status} with reason '{res.reason}' for page {params['page']}"
     res = await res.text()
     res = utils.multiple_replace(datafordeler_utils.replace_characters_dct, res, flags=re.IGNORECASE)
@@ -108,7 +108,7 @@ async def datafordeler_initial_parser(metadata: dict, metadata_file: str):
         
         logging.info(f'Trying to setup queue with {settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize()} sleeptime')
         queue.put_nowait(settings.DATAFORDELER_API_SLEEP_TIME * queue.qsize())
-        task = asyncio.create_task(request_and_ingest(mysql_engine_pool, session, params.copy(), url, metadata, queue)) # scroll implemented as failure proofing
+        task = asyncio.create_task(request_and_ingest(mysql_engine_pool, session, params.copy(), url, metadata, queue))
         tasks.append(task)
 
         if queue.qsize() > 10:
@@ -133,7 +133,7 @@ async def datafordeler_new_events():
     params = {
         'username': settings.DATAFORDELER_API_USR,
         'password': settings.DATAFORDELER_API_PSW,
-        'page': 1,
+        'page': 0,
         'pagesize': settings.DATAFORDELER_API_PAGESIZE,
         'datefrom': latest_date.strftime('%Y-%m-%d'), # virkningFra ??
         'dateto' : datetime.today().strftime('%Y-%m-%d'),
